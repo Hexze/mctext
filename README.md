@@ -25,8 +25,8 @@ Minecraft text formatting, parsing, and rendering library. Features all the exac
 
 Looking for just the TTF files? Download them from the [releases page](https://github.com/hexze/mctext/releases):
 
-- `minecraft-fonts-modern.zip` - Latest Minecraft fonts with Unifont
-- `minecraft-fonts-legacy.zip` - Classic 1.8.9 fonts
+- `minecraft-fonts-modern.zip` - Latest Minecraft fonts (updated, cleaner look)
+- `minecraft-fonts-legacy.zip` - Classic fonts for those who prefer pre-1.13
 - `minecraft-fonts-all.zip` - Everything
 
 ## Usage
