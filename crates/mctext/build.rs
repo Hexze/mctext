@@ -3,8 +3,12 @@ use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
-const FONTS_VERSION: &str = "v1.0.0";
 const REPO: &str = "hexze/mctext";
+
+fn get_fonts_version() -> String {
+    let version = env::var("CARGO_PKG_VERSION").unwrap_or_else(|_| "1.0.0".to_string());
+    format!("v{}", version)
+}
 
 fn main() {
     println!("cargo::rerun-if-changed=build.rs");
@@ -133,9 +137,10 @@ fn download_font_pack(filename: &str, dest: &Path, subdir: &str) {
         return;
     }
 
+    let version = get_fonts_version();
     let url = format!(
         "https://github.com/{}/releases/download/{}/{}",
-        REPO, FONTS_VERSION, filename
+        REPO, version, filename
     );
 
     println!(
