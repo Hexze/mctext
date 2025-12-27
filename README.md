@@ -1,6 +1,6 @@
 # mctext
 
-Minecraft text formatting, parsing, and rendering library.
+Minecraft text formatting, parsing, and rendering library. Features all the exact glyphs used ingame, for the fonts of both pre and post-1.13.
 
 ## Language Support
 
