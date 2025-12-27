@@ -1,6 +1,9 @@
-use crate::fonts::{FontFamily, FontVariant, FontVersion, ENCHANTING_REGULAR, ILLAGER_REGULAR};
+#[cfg(feature = "special-fonts")]
+use crate::fonts::{ENCHANTING_REGULAR, ILLAGER_REGULAR};
+use crate::fonts::{FontFamily, FontVariant, FontVersion};
 use crate::style::Style;
 use fontdue::{Font, FontSettings, Metrics};
+#[cfg(feature = "special-fonts")]
 use std::sync::OnceLock;
 
 pub struct GlyphMetrics {
@@ -23,9 +26,12 @@ impl From<Metrics> for GlyphMetrics {
     }
 }
 
+#[cfg(feature = "special-fonts")]
 static ENCHANTING_FONT: OnceLock<Font> = OnceLock::new();
+#[cfg(feature = "special-fonts")]
 static ILLAGER_FONT: OnceLock<Font> = OnceLock::new();
 
+#[cfg(feature = "special-fonts")]
 fn enchanting_font() -> &'static Font {
     ENCHANTING_FONT.get_or_init(|| {
         Font::from_bytes(ENCHANTING_REGULAR, FontSettings::default())
@@ -33,6 +39,7 @@ fn enchanting_font() -> &'static Font {
     })
 }
 
+#[cfg(feature = "special-fonts")]
 fn illager_font() -> &'static Font {
     ILLAGER_FONT.get_or_init(|| {
         Font::from_bytes(ILLAGER_REGULAR, FontSettings::default())
@@ -67,10 +74,12 @@ impl FontSystem {
         }
     }
 
+    #[cfg(feature = "modern-fonts")]
     pub fn modern() -> Self {
         Self::new(FontVersion::Modern)
     }
 
+    #[cfg(feature = "legacy-fonts")]
     pub fn legacy() -> Self {
         Self::new(FontVersion::Legacy)
     }
@@ -91,7 +100,9 @@ impl FontSystem {
     pub fn font_for_family(&self, family: FontFamily) -> &Font {
         match family {
             FontFamily::Minecraft => &self.regular,
+            #[cfg(feature = "special-fonts")]
             FontFamily::Enchanting => enchanting_font(),
+            #[cfg(feature = "special-fonts")]
             FontFamily::Illager => illager_font(),
         }
     }
@@ -188,6 +199,7 @@ impl FontSystem {
     }
 }
 
+#[cfg(feature = "modern-fonts")]
 impl Default for FontSystem {
     fn default() -> Self {
         Self::modern()
@@ -199,15 +211,21 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(feature = "modern-fonts")]
     fn test_font_system_creation() {
         let system = FontSystem::modern();
         assert_eq!(system.version(), FontVersion::Modern);
+    }
 
+    #[test]
+    #[cfg(all(feature = "modern-fonts", feature = "legacy-fonts"))]
+    fn test_legacy_font_system() {
         let legacy = FontSystem::legacy();
         assert_eq!(legacy.version(), FontVersion::Legacy);
     }
 
     #[test]
+    #[cfg(feature = "modern-fonts")]
     fn test_has_glyph() {
         let system = FontSystem::modern();
         assert!(system.has_glyph('A', FontVariant::Regular));
@@ -215,6 +233,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "modern-fonts")]
     fn test_measure_text() {
         let system = FontSystem::modern();
         let width = system.measure_text("Hello", 16.0);
@@ -222,6 +241,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "modern-fonts")]
     fn test_measure_skips_color_codes() {
         let system = FontSystem::modern();
         let plain = system.measure_text("Hello", 16.0);
@@ -230,6 +250,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "modern-fonts")]
     fn test_ascent_ratio() {
         let system = FontSystem::modern();
         let ratio = system.ascent_ratio(FontVariant::Regular);

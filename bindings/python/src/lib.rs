@@ -1,6 +1,4 @@
-use ::mctext::{
-    McText as RustMcText, NamedColor, Span as RustSpan, Style as RustStyle, TextColor,
-};
+use ::mctext::{McText as RustMcText, NamedColor, Span as RustSpan, Style as RustStyle, TextColor};
 use pyo3::prelude::*;
 
 #[pyclass]

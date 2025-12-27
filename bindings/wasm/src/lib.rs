@@ -17,8 +17,16 @@ pub struct Span {
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum Color {
-    Named { name: String, code: char, rgb: [u8; 3] },
-    Rgb { r: u8, g: u8, b: u8 },
+    Named {
+        name: String,
+        code: char,
+        rgb: [u8; 3],
+    },
+    Rgb {
+        r: u8,
+        g: u8,
+        b: u8,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -281,7 +289,8 @@ mod render {
         use mctext::{SoftwareRenderer, TextRenderContext};
 
         let ctx = TextRenderContext::new(&font_system.inner);
-        let mut renderer = SoftwareRenderer::new(&font_system.inner, width as usize, height as usize);
+        let mut renderer =
+            SoftwareRenderer::new(&font_system.inner, width as usize, height as usize);
 
         let _ = ctx.render_str(&mut renderer, text, 0.0, 0.0, &options.to_rust());
 

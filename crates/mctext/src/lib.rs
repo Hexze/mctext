@@ -12,13 +12,19 @@ mod render;
 mod system;
 
 pub use color::{NamedColor, SHADOW_OFFSET, TextColor, shadow_color};
-pub use fonts::{
-    ENCHANTING_REGULAR, FontFamily, FontVariant, FontVersion, ILLAGER_REGULAR, LEGACY_BOLD,
-    LEGACY_BOLD_ITALIC, LEGACY_ITALIC, LEGACY_REGULAR, MINECRAFT_BOLD, MINECRAFT_BOLD_ITALIC,
-    MINECRAFT_ITALIC, MINECRAFT_REGULAR,
-};
-pub use json::{parse_json_component, parse_value as parse_json_value, to_json, to_legacy};
+pub use fonts::{FontFamily, FontVariant, FontVersion};
+
+#[cfg(feature = "modern-fonts")]
+pub use fonts::{MINECRAFT_BOLD, MINECRAFT_BOLD_ITALIC, MINECRAFT_ITALIC, MINECRAFT_REGULAR};
+
+#[cfg(feature = "legacy-fonts")]
+pub use fonts::{LEGACY_BOLD, LEGACY_BOLD_ITALIC, LEGACY_ITALIC, LEGACY_REGULAR};
+
+#[cfg(feature = "special-fonts")]
+pub use fonts::{ENCHANTING_REGULAR, ILLAGER_REGULAR};
+
 pub use json::{ParseError, try_parse_json_component};
+pub use json::{parse_json_component, parse_value as parse_json_value, to_json, to_legacy};
 pub use style::Style;
 pub use text::{McText, Span, count_visible_chars, strip_codes};
 

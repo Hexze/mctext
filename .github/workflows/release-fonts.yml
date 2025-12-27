@@ -20,13 +20,22 @@ jobs:
           cd crates/mctext/assets
 
           # Modern fonts
-          zip -r ../../../minecraft-fonts-modern.zip modern/
+          mkdir -p modern-pack
+          cp modern/minecraft*.ttf modern-pack/
+          zip -j minecraft-fonts-modern.zip modern-pack/*
+          mv minecraft-fonts-modern.zip ../../../
 
           # Legacy fonts
-          zip -r ../../../minecraft-fonts-legacy.zip legacy/
+          mkdir -p legacy-pack
+          cp legacy/*.ttf legacy-pack/
+          zip -j minecraft-fonts-legacy.zip legacy-pack/*
+          mv minecraft-fonts-legacy.zip ../../../
 
-          # All fonts
-          zip -r ../../../minecraft-fonts-all.zip modern/ legacy/
+          # Special fonts (enchanting, illager)
+          mkdir -p special-pack
+          cp modern/enchanting.ttf modern/illager.ttf special-pack/
+          zip -j minecraft-fonts-special.zip special-pack/*
+          mv minecraft-fonts-special.zip ../../../
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
@@ -34,6 +43,6 @@ jobs:
           files: |
             minecraft-fonts-modern.zip
             minecraft-fonts-legacy.zip
-            minecraft-fonts-all.zip
+            minecraft-fonts-special.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

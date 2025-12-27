@@ -1,9 +1,9 @@
 name: Release Rust
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_run:
+    workflows: ["Release Fonts"]
+    types: [completed]
 
 env:
   CARGO_TERM_COLOR: always
@@ -12,6 +12,7 @@ jobs:
   publish:
     name: Publish to crates.io
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable

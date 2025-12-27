@@ -20,8 +20,8 @@ impl fmt::Display for ParseError {
 impl std::error::Error for ParseError {}
 
 pub fn try_parse_json_component(json: &str) -> Result<McText, ParseError> {
-    let value = serde_json::from_str::<Value>(json)
-        .map_err(|e| ParseError::InvalidJson(e.to_string()))?;
+    let value =
+        serde_json::from_str::<Value>(json).map_err(|e| ParseError::InvalidJson(e.to_string()))?;
     Ok(parse_value(&value))
 }
 

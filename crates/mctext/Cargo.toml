@@ -11,14 +11,22 @@ documentation = "https://docs.rs/mctext"
 readme = "README.md"
 keywords = ["minecraft", "chat", "formatting", "font", "text"]
 categories = ["game-development", "text-processing", "rendering"]
-exclude = ["font-analysis/", "scripts/"]
+exclude = ["font-analysis/", "scripts/", "assets/"]
 
 [features]
-default = []
+default = ["modern-fonts"]
 serde = ["dep:serde"]
 render = ["dep:fontdue"]
+modern-fonts = ["render"]
+legacy-fonts = ["render"]
+special-fonts = ["render"]
+all-fonts = ["modern-fonts", "legacy-fonts", "special-fonts"]
 
 [dependencies]
 serde = { workspace = true, optional = true }
 serde_json.workspace = true
 fontdue = { workspace = true, optional = true }
+
+[build-dependencies]
+ureq = "2"
+zip = { version = "2", default-features = false, features = ["deflate"] }

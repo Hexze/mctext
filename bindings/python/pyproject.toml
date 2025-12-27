@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "mctext"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Minecraft text formatting, parsing, and rendering"
 readme = "README.md"
 license = { text = "MIT" }
