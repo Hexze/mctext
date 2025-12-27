@@ -365,6 +365,8 @@ def generate_legacy_fonts(aglfn: dict):
             gw, gh = img.width // 16, img.height // 16
             for i in range(256):
                 cp = page * 256 + i
+                if cp >= 0xFFFE:
+                    continue
                 char = chr(cp)
                 if char in builder.seen:
                     continue
