@@ -1,0 +1,25 @@
+{
+  "name": "@hexze/mctext",
+  "version": "0.1.0",
+  "description": "Minecraft text formatting, parsing, and rendering",
+  "main": "mctext.js",
+  "types": "mctext.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hexze/mctext"
+  },
+  "keywords": [
+    "minecraft",
+    "chat",
+    "formatting",
+    "text",
+    "wasm"
+  ],
+  "author": "Hexze",
+  "license": "MIT",
+  "files": [
+    "mctext_bg.wasm",
+    "mctext.js",
+    "mctext.d.ts"
+  ]
+}

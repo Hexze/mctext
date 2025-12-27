@@ -1,0 +1,39 @@
+name: Release Fonts
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Package and Release Fonts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create font archives
+        run: |
+          cd crates/mctext/assets
+
+          # Modern fonts
+          zip -r ../../../minecraft-fonts-modern.zip modern/
+
+          # Legacy fonts
+          zip -r ../../../minecraft-fonts-legacy.zip legacy/
+
+          # All fonts
+          zip -r ../../../minecraft-fonts-all.zip modern/ legacy/
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            minecraft-fonts-modern.zip
+            minecraft-fonts-legacy.zip
+            minecraft-fonts-all.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

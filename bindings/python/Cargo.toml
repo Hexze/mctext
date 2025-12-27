@@ -1,0 +1,20 @@
+[package]
+name = "mctext-python"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+description = "Minecraft text formatting for Python"
+repository = "https://github.com/hexze/mctext"
+
+[lib]
+name = "mctext"
+crate-type = ["cdylib"]
+
+[features]
+default = ["render"]
+render = ["mctext/render"]
+
+[dependencies]
+mctext = { path = "../../crates/mctext" }
+pyo3 = { version = "0.23", features = ["extension-module"] }

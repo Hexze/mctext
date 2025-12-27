@@ -1,0 +1,24 @@
+[package]
+name = "mctext"
+description = "Minecraft text formatting, parsing, and rendering"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors = ["Hexze"]
+documentation = "https://docs.rs/mctext"
+readme = "README.md"
+keywords = ["minecraft", "chat", "formatting", "font", "text"]
+categories = ["game-development", "text-processing", "rendering"]
+exclude = ["font-analysis/", "scripts/"]
+
+[features]
+default = []
+serde = ["dep:serde"]
+render = ["dep:fontdue"]
+
+[dependencies]
+serde = { workspace = true, optional = true }
+serde_json.workspace = true
+fontdue = { workspace = true, optional = true }

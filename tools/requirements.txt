@@ -1,0 +1,4 @@
+fonttools>=4.0
+pillow>=9.0
+pygame>=2.0
+requests>=2.0
