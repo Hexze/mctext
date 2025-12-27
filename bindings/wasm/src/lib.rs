@@ -173,7 +173,9 @@ mod render {
     #[derive(Clone, Copy)]
     pub enum FontFamily {
         Minecraft,
+        #[cfg(feature = "special-fonts")]
         Enchanting,
+        #[cfg(feature = "special-fonts")]
         Illager,
     }
 
@@ -181,7 +183,9 @@ mod render {
         fn from(f: FontFamily) -> Self {
             match f {
                 FontFamily::Minecraft => RustFontFamily::Minecraft,
+                #[cfg(feature = "special-fonts")]
                 FontFamily::Enchanting => RustFontFamily::Enchanting,
+                #[cfg(feature = "special-fonts")]
                 FontFamily::Illager => RustFontFamily::Illager,
             }
         }
@@ -194,12 +198,14 @@ mod render {
 
     #[wasm_bindgen]
     impl FontSystem {
+        #[cfg(feature = "modern-fonts")]
         pub fn modern() -> Self {
             Self {
                 inner: RustFontSystem::new(FontVersion::Modern),
             }
         }
 
+        #[cfg(feature = "legacy-fonts")]
         pub fn legacy() -> Self {
             Self {
                 inner: RustFontSystem::new(FontVersion::Legacy),

@@ -2,6 +2,8 @@
 
 Minecraft text formatting, parsing, and rendering.
 
+![Font Showcase](https://raw.githubusercontent.com/hexze/mctext/master/showcase.png)
+
 ## Features
 
 - **Text Parsing**: Parse legacy formatting codes and JSON chat components
@@ -60,26 +62,36 @@ ctx.render_str(
     10.0, 20.0,
     &LayoutOptions::new(16.0)
 )?;
-
-// renderer.buffer contains RGBA pixel data
 ```
 
 ## Feature Flags
 
 | Feature | Description |
 |---------|-------------|
-| `serde` | Serialization support for text types |
-| `render` | Font loading, layout engine, and rendering |
+| `modern-fonts` | Modern Minecraft fonts (default) |
+| `legacy-fonts` | Pre-1.13 classic fonts |
+| `special-fonts` | Enchanting and Illager fonts |
+| `all-fonts` | All font variants |
+| `serde` | Serialization support |
+
+```toml
+# Modern fonts only (default)
+mctext = "1.0"
+
+# With legacy fonts
+mctext = { version = "1.0", features = ["legacy-fonts"] }
+
+# All fonts
+mctext = { version = "1.0", features = ["all-fonts"] }
+```
 
 ## Font Versions
-
-Modern and legacy Minecraft font variants are included:
 
 ```rust
 use mctext::FontSystem;
 
-let modern = FontSystem::modern();
-let legacy = FontSystem::legacy();
+let modern = FontSystem::modern();  // requires modern-fonts feature
+let legacy = FontSystem::legacy();  // requires legacy-fonts feature
 ```
 
 ## License

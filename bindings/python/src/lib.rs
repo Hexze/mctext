@@ -235,7 +235,9 @@ mod rendering {
     #[derive(Clone, Copy, PartialEq, Eq)]
     pub enum FontFamily {
         Minecraft,
+        #[cfg(feature = "special-fonts")]
         Enchanting,
+        #[cfg(feature = "special-fonts")]
         Illager,
     }
 
@@ -243,7 +245,9 @@ mod rendering {
         fn from(f: FontFamily) -> Self {
             match f {
                 FontFamily::Minecraft => RustFontFamily::Minecraft,
+                #[cfg(feature = "special-fonts")]
                 FontFamily::Enchanting => RustFontFamily::Enchanting,
+                #[cfg(feature = "special-fonts")]
                 FontFamily::Illager => RustFontFamily::Illager,
             }
         }
@@ -257,6 +261,7 @@ mod rendering {
     #[pymethods]
     impl FontSystem {
         #[staticmethod]
+        #[cfg(feature = "modern-fonts")]
         fn modern() -> Self {
             Self {
                 inner: RustFontSystem::new(FontVersion::Modern),
@@ -264,6 +269,7 @@ mod rendering {
         }
 
         #[staticmethod]
+        #[cfg(feature = "legacy-fonts")]
         fn legacy() -> Self {
             Self {
                 inner: RustFontSystem::new(FontVersion::Legacy),

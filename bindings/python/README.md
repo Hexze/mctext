@@ -2,6 +2,8 @@
 
 Minecraft text formatting, parsing, and rendering for Python.
 
+![Font Showcase](https://raw.githubusercontent.com/hexze/mctext/master/showcase.png)
+
 ## Installation
 
 ```bash

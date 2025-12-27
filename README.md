@@ -27,7 +27,7 @@ Looking for just the TTF files? Download them from the [releases page](https://g
 
 - `minecraft-fonts-modern.zip` - Latest Minecraft fonts (updated, cleaner look)
 - `minecraft-fonts-legacy.zip` - Classic fonts for those who prefer pre-1.13
-- `minecraft-fonts-all.zip` - Everything
+- `minecraft-fonts-special.zip` - Enchanting and Illager fonts
 
 ## Usage
 
@@ -35,10 +35,10 @@ Looking for just the TTF files? Download them from the [releases page](https://g
 
 ```toml
 [dependencies]
-mctext = "0.1"
+mctext = "1.0"
 
-# For font rendering:
-mctext = { version = "0.1", features = ["render"] }
+# With legacy fonts:
+mctext = { version = "1.0", features = ["legacy-fonts"] }
 ```
 
 ```rust
