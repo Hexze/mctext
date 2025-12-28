@@ -1,6 +1,7 @@
 name: Release PyPI
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["Release Fonts"]
     types: [completed]
@@ -11,7 +12,7 @@ permissions:
 jobs:
   linux:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
         target: [x86_64, aarch64]
@@ -37,7 +38,7 @@ jobs:
 
   windows:
     runs-on: windows-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
         target: [x64]
@@ -59,7 +60,7 @@ jobs:
 
   macos:
     runs-on: macos-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
         target: [x86_64, aarch64]
@@ -81,7 +82,7 @@ jobs:
 
   sdist:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
       - name: Build sdist

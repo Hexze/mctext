@@ -1,6 +1,7 @@
 name: Release Rust
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["Release Fonts"]
     types: [completed]
@@ -12,7 +13,7 @@ jobs:
   publish:
     name: Publish to crates.io
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
