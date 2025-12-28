@@ -164,32 +164,7 @@ pub fn named_colors() -> JsValue {
 #[cfg(feature = "render")]
 mod render {
     use super::*;
-    use mctext::{
-        FontFamily as RustFontFamily, FontSystem as RustFontSystem, FontVersion,
-        LayoutOptions as RustLayoutOptions,
-    };
-
-    #[wasm_bindgen]
-    #[derive(Clone, Copy)]
-    pub enum FontFamily {
-        Minecraft,
-        #[cfg(feature = "special-fonts")]
-        Enchanting,
-        #[cfg(feature = "special-fonts")]
-        Illager,
-    }
-
-    impl From<FontFamily> for RustFontFamily {
-        fn from(f: FontFamily) -> Self {
-            match f {
-                FontFamily::Minecraft => RustFontFamily::Minecraft,
-                #[cfg(feature = "special-fonts")]
-                FontFamily::Enchanting => RustFontFamily::Enchanting,
-                #[cfg(feature = "special-fonts")]
-                FontFamily::Illager => RustFontFamily::Illager,
-            }
-        }
-    }
+    use mctext::{FontSystem as RustFontSystem, FontVersion, LayoutOptions as RustLayoutOptions};
 
     #[wasm_bindgen]
     pub struct FontSystem {
@@ -214,11 +189,6 @@ mod render {
 
         pub fn measure(&self, text: &str, size: f32) -> f32 {
             self.inner.measure_text(text, size)
-        }
-
-        #[wasm_bindgen(js_name = measureFamily)]
-        pub fn measure_family(&self, text: &str, size: f32, family: FontFamily) -> f32 {
-            self.inner.measure_text_family(text, size, family.into())
         }
     }
 
@@ -307,71 +277,6 @@ mod render {
         }
     }
 
-    #[wasm_bindgen(js_name = renderFamily)]
-    pub fn render_family(
-        font_system: &FontSystem,
-        text: &str,
-        width: u32,
-        height: u32,
-        size: f32,
-        family: FontFamily,
-    ) -> RenderResult {
-        let rust_family: RustFontFamily = family.into();
-        let mut buffer = vec![0u8; (width * height * 4) as usize];
-
-        let font = font_system.inner.font_for_family(rust_family);
-        let ascent = font
-            .horizontal_line_metrics(size)
-            .map(|m| m.ascent)
-            .unwrap_or(size * 0.8);
-
-        let mut x = 0.0f32;
-        let y = ascent;
-
-        for ch in text.chars() {
-            if ch == ' ' {
-                x += size * 0.4;
-                continue;
-            }
-            if ch.is_control() {
-                continue;
-            }
-
-            let (metrics, bitmap) = font.rasterize(ch, size);
-            let gx = (x + metrics.xmin as f32) as i32;
-            let gy = (y - metrics.height as f32 - metrics.ymin as f32) as i32;
-
-            for row in 0..metrics.height {
-                for col in 0..metrics.width {
-                    let px = gx + col as i32;
-                    let py = gy + row as i32;
-
-                    if px < 0 || py < 0 || px >= width as i32 || py >= height as i32 {
-                        continue;
-                    }
-
-                    let alpha = bitmap[row * metrics.width + col];
-                    if alpha > 0 {
-                        let idx = ((py as u32 * width + px as u32) * 4) as usize;
-                        if idx + 3 < buffer.len() {
-                            buffer[idx] = 255;
-                            buffer[idx + 1] = 255;
-                            buffer[idx + 2] = 255;
-                            buffer[idx + 3] = alpha;
-                        }
-                    }
-                }
-            }
-
-            x += metrics.advance_width;
-        }
-
-        RenderResult {
-            width,
-            height,
-            data: buffer,
-        }
-    }
 }
 
 #[cfg(feature = "render")]
