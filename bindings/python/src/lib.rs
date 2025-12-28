@@ -227,8 +227,8 @@ fn named_colors() -> Vec<(String, char, (u8, u8, u8))> {
 mod rendering {
     use super::*;
     use ::mctext::{
-        FontSystem as RustFontSystem, FontVariant, FontVersion,
-        LayoutOptions as RustLayoutOptions, SoftwareRenderer, TextRenderContext,
+        FontSystem as RustFontSystem, FontVariant, FontVersion, LayoutOptions as RustLayoutOptions,
+        SoftwareRenderer, TextRenderContext,
     };
 
     #[pyclass]

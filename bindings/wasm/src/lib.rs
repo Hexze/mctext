@@ -276,7 +276,6 @@ mod render {
             data: renderer.buffer,
         }
     }
-
 }
 
 #[cfg(feature = "render")]
