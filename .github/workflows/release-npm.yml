@@ -27,8 +27,12 @@ jobs:
       - name: Build WASM
         run: wasm-pack build bindings/wasm --target web --scope hexze
 
+      - name: Set package name to @hexze/mctext
+        run: jq '.name = "@hexze/mctext"' package.json > tmp.json && mv tmp.json package.json
+        working-directory: bindings/wasm/pkg
+
       - name: Publish to npm
-        run: wasm-pack publish --access public
+        run: npm publish --access public
         working-directory: bindings/wasm/pkg
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
