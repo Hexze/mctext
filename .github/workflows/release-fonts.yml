@@ -20,21 +20,22 @@ jobs:
         run: |
           cd crates/mctext/assets
 
-          # Modern fonts
+          # Modern fonts (TTF + WOFF2)
           mkdir -p modern-pack
-          cp modern/minecraft*.ttf modern-pack/
+          cp modern/minecraft*.ttf modern/minecraft*.woff2 modern-pack/
           zip -j minecraft-fonts-modern.zip modern-pack/*
           mv minecraft-fonts-modern.zip ../../../
 
-          # Legacy fonts
+          # Legacy fonts (TTF + WOFF2)
           mkdir -p legacy-pack
-          cp legacy/*.ttf legacy-pack/
+          cp legacy/*.ttf legacy/*.woff2 legacy-pack/
           zip -j minecraft-fonts-legacy.zip legacy-pack/*
           mv minecraft-fonts-legacy.zip ../../../
 
-          # Special fonts (enchanting, illager)
+          # Special fonts (TTF + WOFF2)
           mkdir -p special-pack
-          cp modern/enchanting.ttf modern/illager.ttf special-pack/
+          cp modern/enchanting*.ttf modern/enchanting*.woff2 special-pack/
+          cp modern/illager*.ttf modern/illager*.woff2 special-pack/
           zip -j minecraft-fonts-special.zip special-pack/*
           mv minecraft-fonts-special.zip ../../../
 

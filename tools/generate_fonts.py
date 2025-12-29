@@ -212,10 +212,15 @@ class FontBuilder:
     def save(self, name: str, output_dir: Path, aglfn: dict, dates: tuple):
         suffixes = {"Regular": "", "Bold": "-bold", "Italic": "-italic", "Bold Italic": "-bold-italic"}
         for style, data in self.fonts.items():
-            filename = f"{name}{suffixes[style]}.ttf"
+            basename = f"{name}{suffixes[style]}"
             font = build_ttf(f"Minecraft {name.title()}", style, dates, data, aglfn)
-            font.save(str(output_dir / filename))
-            print(f"    {filename}")
+
+            font.save(str(output_dir / f"{basename}.ttf"))
+            print(f"    {basename}.ttf")
+
+            font.flavor = "woff2"
+            font.save(str(output_dir / f"{basename}.woff2"))
+            print(f"    {basename}.woff2")
 
 
 def generate_modern_fonts(version: str, aglfn: dict):
