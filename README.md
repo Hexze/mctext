@@ -112,7 +112,7 @@ The main class for working with formatted Minecraft text.
 
 ### SpanBuilder
 
-Builder for constructing formatted text programmatically.
+Builder for constructing formatted text.
 
 | Method | Description |
 |--------|-------------|
@@ -191,7 +191,7 @@ Either a named Minecraft color or RGB values.
 
 ## Rendering
 
-Render formatted text to RGBA pixel data using authentic Minecraft fonts.
+Render formatted Minecraft text to RGBA pixel data.
 
 ### Rust
 

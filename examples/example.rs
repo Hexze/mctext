@@ -19,7 +19,7 @@ impl TextRenderer {
         let options = LayoutOptions::new(size).with_shadow(true);
         let mut renderer = SoftwareRenderer::new(&self.fonts, width, height);
 
-        TextRenderContext::new(&self.fonts).render(&mut renderer, text, 0.0, 0.0, &options);
+        let _ = TextRenderContext::new(&self.fonts).render(&mut renderer, text, 0.0, 0.0, &options);
 
         (renderer.buffer, width, height)
     }

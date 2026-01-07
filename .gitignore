@@ -20,6 +20,8 @@ package-lock.json
 
 # Example output
 examples/*_output.png
+examples/target/
+examples/Cargo.lock
 
 # IDE
 .idea/

@@ -112,7 +112,7 @@ impl<'a> LayoutEngine<'a> {
 
         let ascent = self.font_system.ascent_ratio(FontVariant::Regular) * options.size;
         let line_height = options.size + options.line_spacing;
-        let shadow_offset = (options.size / 8.0).max(1.0);
+        let shadow_offset = options.size / 8.0;
 
         for span in text.spans() {
             let color = span.color.unwrap_or(default_color);

@@ -1,5 +1,5 @@
 import { writeFileSync } from "fs";
-import { createCanvas, createImageData } from "canvas";
+import { createCanvas } from "canvas";
 import {
   MCText,
   FontSystem,
@@ -17,11 +17,14 @@ class TextRenderer {
     let height = Math.ceil(size * 2);
     let options = new LayoutOptions(size).withShadow(true);
     let result = render(this.fonts, text, width, height, options);
-    return createImageData(
-      new Uint8ClampedArray(result.data()),
-      result.width(),
-      result.height(),
-    );
+
+    let tmpCanvas = createCanvas(result.width(), result.height());
+    let tmpCtx = tmpCanvas.getContext("2d");
+    let imageData = tmpCtx.createImageData(result.width(), result.height());
+    imageData.data.set(result.data());
+    tmpCtx.putImageData(imageData, 0, 0);
+
+    return tmpCanvas;
   }
 }
 
@@ -33,6 +36,6 @@ ctx.fillStyle = "black";
 ctx.fillRect(0, 0, 400, 60);
 
 let text = new MCText().add("Minecraft Text!").color("red").build();
-ctx.putImageData(renderer.render(text), 10, 20);
+ctx.drawImage(renderer.render(text), 10, 20);
 
 writeFileSync("javascript_output.png", canvas.toBuffer("image/png"));
