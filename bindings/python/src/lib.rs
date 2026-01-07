@@ -1,4 +1,7 @@
-use ::mctext::{McText as RustMcText, NamedColor, Span as RustSpan, Style as RustStyle, TextColor};
+use ::mctext::{
+    MCText as RustMCText, NamedColor, Span as RustSpan, SpanBuilder as RustSpanBuilder,
+    Style as RustStyle, TextColor,
+};
 use pyo3::prelude::*;
 
 #[pyclass]
@@ -141,23 +144,23 @@ impl From<&RustSpan> for Span {
 }
 
 #[pyclass]
-pub struct McText {
-    inner: RustMcText,
+pub struct MCText {
+    inner: RustMCText,
 }
 
 #[pymethods]
-impl McText {
+impl MCText {
     #[new]
     fn new() -> Self {
         Self {
-            inner: RustMcText::new(),
+            inner: RustMCText::new(),
         }
     }
 
     #[staticmethod]
     fn parse(text: &str) -> Self {
         Self {
-            inner: RustMcText::parse(text),
+            inner: RustMCText::parse(text),
         }
     }
 
@@ -184,16 +187,8 @@ impl McText {
         self.inner.spans().iter().map(Span::from).collect()
     }
 
-    fn char_count(&self) -> usize {
-        self.inner.char_count()
-    }
-
-    fn is_empty(&self) -> bool {
-        self.inner.is_empty()
-    }
-
     fn __repr__(&self) -> String {
-        format!("McText('{}')", self.inner.plain_text())
+        format!("MCText('{}')", self.inner.plain_text())
     }
 
     fn __str__(&self) -> String {
@@ -201,7 +196,77 @@ impl McText {
     }
 
     fn __len__(&self) -> usize {
-        self.inner.char_count()
+        self.inner.plain_text().chars().count()
+    }
+
+    fn add(slf: PyRef<'_, Self>, text: &str) -> SpanBuilder {
+        SpanBuilder {
+            inner: Some(slf.inner.clone().add(text)),
+        }
+    }
+}
+
+#[pyclass]
+pub struct SpanBuilder {
+    inner: Option<RustSpanBuilder>,
+}
+
+#[pymethods]
+impl SpanBuilder {
+    fn color(&mut self, color: &str) -> SpanBuilder {
+        let inner = self.inner.take();
+        SpanBuilder {
+            inner: inner.map(|b| {
+                if let Some(parsed) = TextColor::parse(color) {
+                    b.color(parsed)
+                } else {
+                    b
+                }
+            }),
+        }
+    }
+
+    fn bold(&mut self) -> SpanBuilder {
+        SpanBuilder {
+            inner: self.inner.take().map(|b| b.bold()),
+        }
+    }
+
+    fn italic(&mut self) -> SpanBuilder {
+        SpanBuilder {
+            inner: self.inner.take().map(|b| b.italic()),
+        }
+    }
+
+    fn underlined(&mut self) -> SpanBuilder {
+        SpanBuilder {
+            inner: self.inner.take().map(|b| b.underlined()),
+        }
+    }
+
+    fn strikethrough(&mut self) -> SpanBuilder {
+        SpanBuilder {
+            inner: self.inner.take().map(|b| b.strikethrough()),
+        }
+    }
+
+    fn obfuscated(&mut self) -> SpanBuilder {
+        SpanBuilder {
+            inner: self.inner.take().map(|b| b.obfuscated()),
+        }
+    }
+
+    #[pyo3(name = "then")]
+    fn then_span(&mut self, text: &str) -> SpanBuilder {
+        SpanBuilder {
+            inner: self.inner.take().map(|b| b.then(text)),
+        }
+    }
+
+    fn build(&mut self) -> MCText {
+        MCText {
+            inner: self.inner.take().map(|b| b.build()).unwrap_or_default(),
+        }
     }
 }
 
@@ -318,7 +383,7 @@ mod rendering {
     #[pyfunction]
     pub fn render(
         font_system: &FontSystem,
-        text: &str,
+        text: &MCText,
         width: u32,
         height: u32,
         options: &LayoutOptions,
@@ -327,9 +392,7 @@ mod rendering {
         let mut renderer =
             SoftwareRenderer::new(&font_system.inner, width as usize, height as usize);
 
-        // layout_at treats y as top of text area, not baseline
-        // It internally adds ascent to position the baseline correctly
-        let _ = ctx.render_str(&mut renderer, text, 0.0, 0.0, &options.to_rust());
+        let _ = ctx.render(&mut renderer, &text.inner, 0.0, 0.0, &options.to_rust());
 
         RenderResult {
             width,
@@ -349,7 +412,8 @@ mod rendering {
 
 #[pymodule]
 fn mctext(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<McText>()?;
+    m.add_class::<MCText>()?;
+    m.add_class::<SpanBuilder>()?;
     m.add_class::<Span>()?;
     m.add_class::<Color>()?;
     m.add_class::<Style>()?;

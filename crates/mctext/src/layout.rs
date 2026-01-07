@@ -1,7 +1,7 @@
 use crate::color::TextColor;
 use crate::fonts::FontVariant;
 use crate::system::FontSystem;
-use crate::text::McText;
+use crate::text::MCText;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum TextAlign {
@@ -99,11 +99,11 @@ impl<'a> LayoutEngine<'a> {
         Self { font_system }
     }
 
-    pub fn layout(&self, text: &McText, options: &LayoutOptions) -> TextLayout {
+    pub fn layout(&self, text: &MCText, options: &LayoutOptions) -> TextLayout {
         self.layout_at(text, 0.0, 0.0, options)
     }
 
-    pub fn layout_at(&self, text: &McText, x: f32, y: f32, options: &LayoutOptions) -> TextLayout {
+    pub fn layout_at(&self, text: &MCText, x: f32, y: f32, options: &LayoutOptions) -> TextLayout {
         let default_color = TextColor::default();
         let mut glyphs = Vec::new();
         let mut lines: Vec<Vec<PositionedGlyph>> = vec![Vec::new()];
@@ -212,7 +212,7 @@ impl<'a> LayoutEngine<'a> {
         }
     }
 
-    pub fn measure(&self, text: &McText, size: f32) -> (f32, f32) {
+    pub fn measure(&self, text: &MCText, size: f32) -> (f32, f32) {
         let options = LayoutOptions::new(size).with_shadow(false);
         let layout = self.layout(text, &options);
         (layout.width, layout.height)
@@ -233,7 +233,7 @@ mod tests {
     fn test_layout_simple() {
         let system = test_system();
         let engine = LayoutEngine::new(&system);
-        let text = McText::parse("Hello");
+        let text = MCText::parse("Hello");
         let options = LayoutOptions::new(16.0).with_shadow(false);
         let layout = engine.layout(&text, &options);
 
@@ -245,7 +245,7 @@ mod tests {
     fn test_layout_with_shadow() {
         let system = test_system();
         let engine = LayoutEngine::new(&system);
-        let text = McText::parse("Hi");
+        let text = MCText::parse("Hi");
         let options = LayoutOptions::new(16.0);
         let layout = engine.layout(&text, &options);
 
@@ -262,7 +262,7 @@ mod tests {
     fn test_layout_colored() {
         let system = test_system();
         let engine = LayoutEngine::new(&system);
-        let text = McText::parse("\u{00A7}6Gold");
+        let text = MCText::parse("\u{00A7}6Gold");
         let options = LayoutOptions::new(16.0).with_shadow(false);
         let layout = engine.layout(&text, &options);
 
@@ -277,7 +277,7 @@ mod tests {
         let system = test_system();
         let engine = LayoutEngine::new(&system);
 
-        let mut text = McText::new();
+        let mut text = MCText::new();
         text.push(Span::new("A\nB"));
 
         let options = LayoutOptions::new(16.0).with_shadow(false);
@@ -293,7 +293,7 @@ mod tests {
     fn test_layout_alignment() {
         let system = test_system();
         let engine = LayoutEngine::new(&system);
-        let text = McText::parse("Hi");
+        let text = MCText::parse("Hi");
 
         let left = engine.layout(
             &text,
@@ -318,7 +318,7 @@ mod tests {
     fn test_measure() {
         let system = test_system();
         let engine = LayoutEngine::new(&system);
-        let text = McText::parse("Test");
+        let text = MCText::parse("Test");
         let (width, height) = engine.measure(&text, 16.0);
 
         assert!(width > 0.0);

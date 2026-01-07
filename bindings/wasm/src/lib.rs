@@ -1,10 +1,13 @@
-use mctext::{McText as RustMcText, NamedColor, Span as RustSpan, Style as RustStyle, TextColor};
+use mctext::{
+    MCText as RustMCText, NamedColor, Span as RustSpan, SpanBuilder as RustSpanBuilder,
+    Style as RustStyle, TextColor,
+};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
-pub struct McText {
-    inner: RustMcText,
+pub struct MCText {
+    inner: RustMCText,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -77,22 +80,22 @@ impl From<&RustSpan> for Span {
 }
 
 #[wasm_bindgen]
-impl McText {
+impl MCText {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
-            inner: RustMcText::new(),
+            inner: RustMCText::new(),
         }
     }
 
     pub fn parse(text: &str) -> Self {
         Self {
-            inner: RustMcText::parse(text),
+            inner: RustMCText::parse(text),
         }
     }
 
     #[wasm_bindgen(js_name = parseJson)]
-    pub fn parse_json(json: &str) -> Result<McText, JsError> {
+    pub fn parse_json(json: &str) -> Result<MCText, JsError> {
         mctext::try_parse_json_component(json)
             .map(|inner| Self { inner })
             .map_err(|e| JsError::new(&e.to_string()))
@@ -118,20 +121,83 @@ impl McText {
         serde_wasm_bindgen::to_value(&spans).unwrap_or(JsValue::NULL)
     }
 
-    #[wasm_bindgen(js_name = charCount)]
-    pub fn char_count(&self) -> usize {
-        self.inner.char_count()
-    }
-
-    #[wasm_bindgen(js_name = isEmpty)]
-    pub fn is_empty(&self) -> bool {
-        self.inner.is_empty()
+    pub fn add(self, text: &str) -> SpanBuilder {
+        SpanBuilder {
+            inner: Some(self.inner.add(text)),
+        }
     }
 }
 
-impl Default for McText {
+impl Default for MCText {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[wasm_bindgen]
+pub struct SpanBuilder {
+    inner: Option<RustSpanBuilder>,
+}
+
+#[wasm_bindgen]
+impl SpanBuilder {
+    pub fn color(mut self, color: &str) -> Self {
+        if let Some(inner) = self.inner.take() {
+            if let Some(parsed) = TextColor::parse(color) {
+                self.inner = Some(inner.color(parsed));
+            } else {
+                self.inner = Some(inner);
+            }
+        }
+        self
+    }
+
+    pub fn bold(mut self) -> Self {
+        if let Some(inner) = self.inner.take() {
+            self.inner = Some(inner.bold());
+        }
+        self
+    }
+
+    pub fn italic(mut self) -> Self {
+        if let Some(inner) = self.inner.take() {
+            self.inner = Some(inner.italic());
+        }
+        self
+    }
+
+    pub fn underlined(mut self) -> Self {
+        if let Some(inner) = self.inner.take() {
+            self.inner = Some(inner.underlined());
+        }
+        self
+    }
+
+    pub fn strikethrough(mut self) -> Self {
+        if let Some(inner) = self.inner.take() {
+            self.inner = Some(inner.strikethrough());
+        }
+        self
+    }
+
+    pub fn obfuscated(mut self) -> Self {
+        if let Some(inner) = self.inner.take() {
+            self.inner = Some(inner.obfuscated());
+        }
+        self
+    }
+
+    pub fn then(mut self, text: &str) -> Self {
+        if let Some(inner) = self.inner.take() {
+            self.inner = Some(inner.then(text));
+        }
+        self
+    }
+
+    pub fn build(mut self) -> MCText {
+        MCText {
+            inner: self.inner.take().map(|b| b.build()).unwrap_or_default(),
+        }
     }
 }
 
@@ -257,7 +323,7 @@ mod render {
     #[wasm_bindgen]
     pub fn render(
         font_system: &FontSystem,
-        text: &str,
+        text: &MCText,
         width: u32,
         height: u32,
         options: &LayoutOptions,
@@ -268,7 +334,7 @@ mod render {
         let mut renderer =
             SoftwareRenderer::new(&font_system.inner, width as usize, height as usize);
 
-        let _ = ctx.render_str(&mut renderer, text, 0.0, 0.0, &options.to_rust());
+        let _ = ctx.render(&mut renderer, &text.inner, 0.0, 0.0, &options.to_rust());
 
         RenderResult {
             width,

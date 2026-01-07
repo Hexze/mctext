@@ -1,7 +1,7 @@
 use crate::fonts::FontVariant;
 use crate::layout::{LayoutEngine, LayoutOptions, TextLayout};
 use crate::system::FontSystem;
-use crate::text::McText;
+use crate::text::MCText;
 
 pub trait TextRenderer {
     type Error;
@@ -54,18 +54,18 @@ impl<'a> TextRenderContext<'a> {
         self.font_system
     }
 
-    pub fn layout(&self, text: &McText, options: &LayoutOptions) -> TextLayout {
+    pub fn layout(&self, text: &MCText, options: &LayoutOptions) -> TextLayout {
         self.layout_engine.layout(text, options)
     }
 
-    pub fn layout_at(&self, text: &McText, x: f32, y: f32, options: &LayoutOptions) -> TextLayout {
+    pub fn layout_at(&self, text: &MCText, x: f32, y: f32, options: &LayoutOptions) -> TextLayout {
         self.layout_engine.layout_at(text, x, y, options)
     }
 
     pub fn render<R: TextRenderer>(
         &self,
         renderer: &mut R,
-        text: &McText,
+        text: &MCText,
         x: f32,
         y: f32,
         options: &LayoutOptions,
@@ -82,7 +82,7 @@ impl<'a> TextRenderContext<'a> {
         y: f32,
         options: &LayoutOptions,
     ) -> Result<(), R::Error> {
-        let parsed = McText::parse(text);
+        let parsed = MCText::parse(text);
         self.render(renderer, &parsed, x, y, options)
     }
 }
@@ -246,7 +246,7 @@ mod tests {
         let system = FontSystem::modern();
         let ctx = TextRenderContext::new(&system);
 
-        let text = McText::parse("Test");
+        let text = MCText::parse("Test");
         let options = LayoutOptions::new(16.0);
         let layout = ctx.layout(&text, &options);
 

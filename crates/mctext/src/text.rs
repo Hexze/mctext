@@ -38,11 +38,73 @@ impl Span {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct McText {
+pub struct MCText {
     spans: Vec<Span>,
 }
 
-impl McText {
+pub struct SpanBuilder {
+    mctext: MCText,
+    text: String,
+    color: Option<TextColor>,
+    style: Style,
+}
+
+impl SpanBuilder {
+    pub fn color(mut self, color: impl Into<TextColor>) -> Self {
+        self.color = Some(color.into());
+        self
+    }
+
+    pub fn bold(mut self) -> Self {
+        self.style.bold = true;
+        self
+    }
+
+    pub fn italic(mut self) -> Self {
+        self.style.italic = true;
+        self
+    }
+
+    pub fn underlined(mut self) -> Self {
+        self.style.underlined = true;
+        self
+    }
+
+    pub fn strikethrough(mut self) -> Self {
+        self.style.strikethrough = true;
+        self
+    }
+
+    pub fn obfuscated(mut self) -> Self {
+        self.style.obfuscated = true;
+        self
+    }
+
+    pub fn then(mut self, text: impl Into<String>) -> SpanBuilder {
+        self.mctext.spans.push(Span {
+            text: self.text,
+            color: self.color,
+            style: self.style,
+        });
+        SpanBuilder {
+            mctext: self.mctext,
+            text: text.into(),
+            color: None,
+            style: Style::default(),
+        }
+    }
+
+    pub fn build(mut self) -> MCText {
+        self.mctext.spans.push(Span {
+            text: self.text,
+            color: self.color,
+            style: self.style,
+        });
+        self.mctext
+    }
+}
+
+impl MCText {
     pub fn new() -> Self {
         Self { spans: Vec::new() }
     }
@@ -113,16 +175,21 @@ impl McText {
         self.spans.push(span);
     }
 
+    pub fn add(self, text: impl Into<String>) -> SpanBuilder {
+        SpanBuilder {
+            mctext: self,
+            text: text.into(),
+            color: None,
+            style: Style::default(),
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.spans.is_empty() || self.spans.iter().all(|s| s.is_empty())
     }
 
     pub fn plain_text(&self) -> String {
         self.spans.iter().map(|s| s.text.as_str()).collect()
-    }
-
-    pub fn char_count(&self) -> usize {
-        self.spans.iter().map(|s| s.text.chars().count()).sum()
     }
 
     pub fn to_legacy(&self) -> String {
@@ -185,7 +252,7 @@ pub fn count_visible_chars(text: &str) -> usize {
     count
 }
 
-impl<'a> IntoIterator for &'a McText {
+impl<'a> IntoIterator for &'a MCText {
     type Item = &'a Span;
     type IntoIter = std::slice::Iter<'a, Span>;
 
@@ -194,7 +261,7 @@ impl<'a> IntoIterator for &'a McText {
     }
 }
 
-impl IntoIterator for McText {
+impl IntoIterator for MCText {
     type Item = Span;
     type IntoIter = std::vec::IntoIter<Span>;
 
@@ -209,7 +276,7 @@ mod tests {
 
     #[test]
     fn test_parse_simple() {
-        let text = McText::parse("\u{00A7}6Hello \u{00A7}bWorld");
+        let text = MCText::parse("\u{00A7}6Hello \u{00A7}bWorld");
         assert_eq!(text.spans().len(), 2);
         assert_eq!(text.spans()[0].text, "Hello ");
         assert_eq!(
@@ -225,7 +292,7 @@ mod tests {
 
     #[test]
     fn test_parse_with_format() {
-        let text = McText::parse("\u{00A7}6\u{00A7}lBold Gold");
+        let text = MCText::parse("\u{00A7}6\u{00A7}lBold Gold");
         assert_eq!(text.spans().len(), 1);
         assert_eq!(
             text.spans()[0].color,
@@ -236,7 +303,7 @@ mod tests {
 
     #[test]
     fn test_parse_reset() {
-        let text = McText::parse("\u{00A7}6Gold\u{00A7}rPlain");
+        let text = MCText::parse("\u{00A7}6Gold\u{00A7}rPlain");
         assert_eq!(text.spans().len(), 2);
         assert_eq!(
             text.spans()[0].color,
@@ -247,7 +314,7 @@ mod tests {
 
     #[test]
     fn test_plain_text() {
-        let text = McText::parse("\u{00A7}6Hello \u{00A7}bWorld");
+        let text = MCText::parse("\u{00A7}6Hello \u{00A7}bWorld");
         assert_eq!(text.plain_text(), "Hello World");
     }
 
@@ -265,9 +332,9 @@ mod tests {
     #[test]
     fn test_to_legacy_roundtrip() {
         let original = "\u{00A7}6\u{00A7}lBold Gold \u{00A7}bAqua";
-        let text = McText::parse(original);
+        let text = MCText::parse(original);
         let legacy = text.to_legacy();
-        let reparsed = McText::parse(&legacy);
+        let reparsed = MCText::parse(&legacy);
         assert_eq!(text.plain_text(), reparsed.plain_text());
     }
 
@@ -292,5 +359,68 @@ mod tests {
     fn test_span_with_named_color() {
         let span = Span::new("Hello").with_color(NamedColor::Red);
         assert_eq!(span.color, Some(TextColor::Named(NamedColor::Red)));
+    }
+
+    #[test]
+    fn test_builder_single_span() {
+        let text = MCText::new()
+            .add("Hello")
+            .color(NamedColor::Red)
+            .bold()
+            .build();
+
+        assert_eq!(text.spans().len(), 1);
+        assert_eq!(text.spans()[0].text, "Hello");
+        assert_eq!(
+            text.spans()[0].color,
+            Some(TextColor::Named(NamedColor::Red))
+        );
+        assert!(text.spans()[0].style.bold);
+    }
+
+    #[test]
+    fn test_builder_multiple_spans() {
+        let text = MCText::new()
+            .add("Red ")
+            .color(NamedColor::Red)
+            .then("Blue ")
+            .color(NamedColor::Blue)
+            .italic()
+            .then("Plain")
+            .build();
+
+        assert_eq!(text.spans().len(), 3);
+        assert_eq!(text.plain_text(), "Red Blue Plain");
+        assert_eq!(
+            text.spans()[0].color,
+            Some(TextColor::Named(NamedColor::Red))
+        );
+        assert_eq!(
+            text.spans()[1].color,
+            Some(TextColor::Named(NamedColor::Blue))
+        );
+        assert!(text.spans()[1].style.italic);
+        assert_eq!(text.spans()[2].color, None);
+    }
+
+    #[test]
+    fn test_builder_rgb_color() {
+        let text = MCText::new()
+            .add("Custom")
+            .color(TextColor::Rgb {
+                r: 255,
+                g: 128,
+                b: 0,
+            })
+            .build();
+
+        assert_eq!(
+            text.spans()[0].color,
+            Some(TextColor::Rgb {
+                r: 255,
+                g: 128,
+                b: 0
+            })
+        );
     }
 }

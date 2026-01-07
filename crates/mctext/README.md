@@ -12,10 +12,11 @@ Minecraft text formatting, parsing, and rendering library. Features all the exac
 
 ## Features
 
-- **Text Parsing** - Parse legacy `§` formatting codes and JSON chat components
+- **Builder API** - Fluent interface for constructing formatted text
 - **Color Support** - All 16 named Minecraft colors plus RGB hex colors
 - **Style Handling** - Bold, italic, underlined, strikethrough, obfuscated
 - **Font Rendering** - Measure and render text with authentic Minecraft fonts
+- **Legacy Support** - Parse `§` formatting codes and JSON chat components
 
 ## Font Showcase
 
@@ -42,9 +43,13 @@ mctext = { version = "1.0", features = ["legacy-fonts"] }
 ```
 
 ```rust
-use mctext::McText;
+use mctext::{MCText, NamedColor};
 
-let text = McText::parse("§cRed §lBold");
+let text = MCText::new()
+    .add("Red ").color(NamedColor::Red)
+    .then("Bold").color(NamedColor::Red).bold()
+    .build();
+
 for span in text.spans() {
     println!("{}: {:?}", span.text, span.color);
 }
@@ -59,7 +64,8 @@ pip install mctext
 ```python
 import mctext
 
-text = mctext.parse("§cRed §lBold")
+text = mctext.MCText().add("Red ").color("red").then("Bold").color("red").bold().build()
+
 for span in text.spans():
     print(f"{span.text}: {span.color}")
 ```
@@ -71,9 +77,12 @@ npm install @hexze/mctext
 ```
 
 ```javascript
-import { McText } from '@hexze/mctext';
+import init, { MCText } from '@hexze/mctext';
 
-const text = McText.parse("§cRed §lBold");
+await init();
+
+let text = new MCText().add("Red ").color("red").then("Bold").color("red").bold().build();
+
 for (const span of text.spans()) {
     console.log(`${span.text}: ${span.color}`);
 }

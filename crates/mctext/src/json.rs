@@ -1,6 +1,6 @@
 use crate::color::TextColor;
 use crate::style::Style;
-use crate::text::{McText, Span};
+use crate::text::{MCText, Span};
 use serde_json::Value;
 use std::fmt;
 
@@ -19,18 +19,18 @@ impl fmt::Display for ParseError {
 
 impl std::error::Error for ParseError {}
 
-pub fn try_parse_json_component(json: &str) -> Result<McText, ParseError> {
+pub fn try_parse_json_component(json: &str) -> Result<MCText, ParseError> {
     let value =
         serde_json::from_str::<Value>(json).map_err(|e| ParseError::InvalidJson(e.to_string()))?;
     Ok(parse_value(&value))
 }
 
-pub fn parse_json_component(json: &str) -> McText {
+pub fn parse_json_component(json: &str) -> MCText {
     try_parse_json_component(json).unwrap_or_default()
 }
 
-pub fn parse_value(value: &Value) -> McText {
-    let mut text = McText::new();
+pub fn parse_value(value: &Value) -> MCText {
+    let mut text = MCText::new();
     extract_spans(value, None, Style::default(), &mut text);
     text
 }
@@ -39,12 +39,12 @@ fn extract_spans(
     value: &Value,
     parent_color: Option<TextColor>,
     parent_style: Style,
-    text: &mut McText,
+    text: &mut MCText,
 ) {
     match value {
         Value::String(s) => {
             if !s.is_empty() {
-                let parsed = McText::parse(s);
+                let parsed = MCText::parse(s);
                 if parsed.is_empty() {
                     text.push(Span {
                         text: s.clone(),
@@ -96,7 +96,7 @@ fn extract_spans(
 
             if let Some(t) = obj.get("text").and_then(|v| v.as_str()) {
                 if !t.is_empty() {
-                    let parsed = McText::parse(t);
+                    let parsed = MCText::parse(t);
                     if parsed.is_empty() || parsed.spans().iter().all(|s| s.color.is_none()) {
                         text.push(Span {
                             text: t.to_string(),
@@ -138,7 +138,7 @@ fn extract_spans(
     }
 }
 
-pub fn to_json(text: &McText) -> String {
+pub fn to_json(text: &MCText) -> String {
     if text.spans().is_empty() {
         return r#"{"text":""}"#.to_string();
     }
@@ -195,7 +195,7 @@ fn span_to_json(span: &Span) -> String {
     format!("{{{}}}", parts.join(","))
 }
 
-pub fn to_legacy(text: &McText) -> String {
+pub fn to_legacy(text: &MCText) -> String {
     text.to_legacy()
 }
 
@@ -269,7 +269,7 @@ mod tests {
 
     #[test]
     fn test_to_json_named_color() {
-        let mut text = McText::new();
+        let mut text = MCText::new();
         text.push(Span::new("Hello").with_color(NamedColor::Gold));
         let json = to_json(&text);
         assert!(json.contains("gold"));
@@ -278,7 +278,7 @@ mod tests {
 
     #[test]
     fn test_to_json_rgb_color() {
-        let mut text = McText::new();
+        let mut text = MCText::new();
         text.push(Span::new("Custom").with_color(TextColor::Rgb {
             r: 255,
             g: 128,

@@ -9,9 +9,17 @@ __pycache__/
 .venv/
 venv/
 
+# JavaScript
+node_modules/
+package.json
+package-lock.json
+
 # Tools
 /tools/.cache/
 /tools/.test_output/
+
+# Example output
+examples/*_output.png
 
 # IDE
 .idea/

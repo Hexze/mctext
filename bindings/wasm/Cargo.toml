@@ -13,7 +13,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["modern-fonts"]
-render = []
+render = ["mctext/render"]
 modern-fonts = ["mctext/modern-fonts", "render"]
 legacy-fonts = ["mctext/legacy-fonts", "render"]
 special-fonts = ["mctext/special-fonts", "render"]
