@@ -46,7 +46,7 @@ mctext = { version = "1.0", features = ["legacy-fonts"] }
 use mctext::{MCText, NamedColor};
 
 let text = MCText::new()
-    .add("Red ").color(NamedColor::Red)
+    .span("Red ").color(NamedColor::Red)
     .then("Bold").color(NamedColor::Red).bold()
     .build();
 
@@ -64,7 +64,7 @@ pip install mctext
 ```python
 import mctext
 
-text = mctext.MCText().add("Red ").color("red").then("Bold").color("red").bold().build()
+text = mctext.MCText().span("Red ").color("red").then("Bold").color("red").bold().build()
 
 for span in text.spans():
     print(f"{span.text}: {span.color}")
@@ -81,7 +81,7 @@ import init, { MCText } from '@hexze/mctext';
 
 await init();
 
-let text = new MCText().add("Red ").color("red").then("Bold").color("red").bold().build();
+let text = new MCText().span("Red ").color("red").then("Bold").color("red").bold().build();
 
 for (const span of text.spans()) {
     console.log(`${span.text}: ${span.color}`);

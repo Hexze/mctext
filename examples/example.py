@@ -1,6 +1,5 @@
-from PIL import Image
-
 import mctext
+from PIL import Image
 
 
 class TextRenderer:
@@ -21,7 +20,7 @@ renderer = TextRenderer()
 
 canvas = Image.new("RGBA", (400, 60), (0, 0, 0, 255))
 
-text = mctext.MCText().add("Minecraft Text!").color("red").build()
+text = mctext.MCText().span("Minecraft Text!").color("red").build()
 canvas.alpha_composite(renderer.render(text), (10, 20))
 
 canvas.save("python_output.png")

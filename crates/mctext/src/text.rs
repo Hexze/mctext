@@ -175,7 +175,7 @@ impl MCText {
         self.spans.push(span);
     }
 
-    pub fn add(self, text: impl Into<String>) -> SpanBuilder {
+    pub fn span(self, text: impl Into<String>) -> SpanBuilder {
         SpanBuilder {
             mctext: self,
             text: text.into(),
@@ -364,7 +364,7 @@ mod tests {
     #[test]
     fn test_builder_single_span() {
         let text = MCText::new()
-            .add("Hello")
+            .span("Hello")
             .color(NamedColor::Red)
             .bold()
             .build();
@@ -381,7 +381,7 @@ mod tests {
     #[test]
     fn test_builder_multiple_spans() {
         let text = MCText::new()
-            .add("Red ")
+            .span("Red ")
             .color(NamedColor::Red)
             .then("Blue ")
             .color(NamedColor::Blue)
@@ -406,7 +406,7 @@ mod tests {
     #[test]
     fn test_builder_rgb_color() {
         let text = MCText::new()
-            .add("Custom")
+            .span("Custom")
             .color(TextColor::Rgb {
                 r: 255,
                 g: 128,

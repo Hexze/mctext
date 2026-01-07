@@ -121,9 +121,9 @@ impl MCText {
         serde_wasm_bindgen::to_value(&spans).unwrap_or(JsValue::NULL)
     }
 
-    pub fn add(self, text: &str) -> SpanBuilder {
+    pub fn span(self, text: &str) -> SpanBuilder {
         SpanBuilder {
-            inner: Some(self.inner.add(text)),
+            inner: Some(self.inner.span(text)),
         }
     }
 }

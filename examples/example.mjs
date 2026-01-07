@@ -35,7 +35,7 @@ let ctx = canvas.getContext("2d");
 ctx.fillStyle = "black";
 ctx.fillRect(0, 0, 400, 60);
 
-let text = new MCText().add("Minecraft Text!").color("red").build();
+let text = new MCText().span("Minecraft Text!").color("red").build();
 ctx.drawImage(renderer.render(text), 10, 20);
 
 writeFileSync("javascript_output.png", canvas.toBuffer("image/png"));

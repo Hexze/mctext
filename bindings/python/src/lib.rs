@@ -199,9 +199,9 @@ impl MCText {
         self.inner.plain_text().chars().count()
     }
 
-    fn add(slf: PyRef<'_, Self>, text: &str) -> SpanBuilder {
+    fn span(slf: PyRef<'_, Self>, text: &str) -> SpanBuilder {
         SpanBuilder {
-            inner: Some(slf.inner.clone().add(text)),
+            inner: Some(slf.inner.clone().span(text)),
         }
     }
 }

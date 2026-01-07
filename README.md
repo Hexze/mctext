@@ -59,7 +59,7 @@ npm install @hexze/mctext
 use mctext::{MCText, NamedColor};
 
 let text = MCText::new()
-    .add("Red ").color(NamedColor::Red)
+    .span("Red ").color(NamedColor::Red)
     .then("Bold").color(NamedColor::Red).bold()
     .build();
 
@@ -73,7 +73,7 @@ for span in text.spans() {
 ```python
 import mctext
 
-text = mctext.MCText().add("Red ").color("red").then("Bold").color("red").bold().build()
+text = mctext.MCText().span("Red ").color("red").then("Bold").color("red").bold().build()
 
 for span in text.spans():
     print(f"{span.text}: {span.color}")
@@ -86,7 +86,7 @@ import init, { MCText } from '@hexze/mctext';
 
 await init();
 
-let text = new MCText().add("Red ").color("red").then("Bold").color("red").bold().build();
+let text = new MCText().span("Red ").color("red").then("Bold").color("red").bold().build();
 
 for (const span of text.spans()) {
     console.log(`${span.text}: ${span.color}`);
@@ -104,7 +104,7 @@ The main class for working with formatted Minecraft text.
 | `new()` | Create empty MCText |
 | `parse(text)` | Parse legacy `§` formatted text |
 | `parseJson(json)` | Parse JSON chat component |
-| `add(text)` | Start building a span, returns SpanBuilder |
+| `span(text)` | Start building a span, returns SpanBuilder |
 | `spans()` | Get array of text spans |
 | `plainText()` | Get text without formatting |
 | `toLegacy()` | Convert to legacy `§` format |
@@ -202,7 +202,7 @@ use mctext::{
 };
 
 let text = MCText::new()
-    .add("Hello ").color(NamedColor::Red)
+    .span("Hello ").color(NamedColor::Red)
     .then("World").color(NamedColor::Red).bold()
     .build();
 
@@ -219,7 +219,7 @@ ctx.render(&mut renderer, &text, 0.0, 0.0, &LayoutOptions::new(16.0).with_shadow
 ```python
 import mctext
 
-text = mctext.MCText().add("Hello ").color("red").then("World").color("red").bold().build()
+text = mctext.MCText().span("Hello ").color("red").then("World").color("red").bold().build()
 
 fonts = mctext.FontSystem.modern()
 options = mctext.LayoutOptions(16.0, None, True)
@@ -235,7 +235,7 @@ import init, { MCText, FontSystem, LayoutOptions, render } from '@hexze/mctext';
 
 await init();
 
-let text = new MCText().add("Hello ").color("red").then("World").color("red").bold().build();
+let text = new MCText().span("Hello ").color("red").then("World").color("red").bold().build();
 
 let fonts = FontSystem.modern();
 let options = new LayoutOptions(16.0).withShadow(true);

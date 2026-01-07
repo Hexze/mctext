@@ -33,7 +33,7 @@ pip install mctext
 ```python
 import mctext
 
-text = mctext.MCText().add("Red ").color("red").then("Bold").color("red").bold().build()
+text = mctext.MCText().span("Red ").color("red").then("Bold").color("red").bold().build()
 
 for span in text.spans():
     print(f"{span.text}: {span.color}")
@@ -48,7 +48,7 @@ for span in text.spans():
 | `MCText()` | Create empty MCText |
 | `MCText.parse(text)` | Parse legacy `§` formatted text |
 | `MCText.parse_json(json)` | Parse JSON chat component |
-| `add(text)` | Start building a span, returns SpanBuilder |
+| `span(text)` | Start building a span, returns SpanBuilder |
 | `spans()` | Get list of text spans |
 | `plain_text()` | Get text without formatting |
 | `to_legacy()` | Convert to legacy `§` format |
@@ -109,7 +109,7 @@ for span in text.spans():
 ```python
 import mctext
 
-text = mctext.MCText().add("Hello ").color("red").then("World").color("red").bold().build()
+text = mctext.MCText().span("Hello ").color("red").then("World").color("red").bold().build()
 
 fonts = mctext.FontSystem.modern()
 options = mctext.LayoutOptions(16.0, None, True)  # size, max_width, shadow

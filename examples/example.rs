@@ -57,7 +57,7 @@ fn main() {
     }
 
     let text = MCText::new()
-        .add("Minecraft Text!")
+        .span("Minecraft Text!")
         .color(NamedColor::Red)
         .build();
     let (data, w, h) = renderer.render(&text, 16.0);
