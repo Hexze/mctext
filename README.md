@@ -82,9 +82,7 @@ for span in text.spans():
 ### JavaScript
 
 ```javascript
-import init, { MCText } from '@hexze/mctext';
-
-await init();
+const { MCText } = require('@hexze/mctext');
 
 let text = new MCText().span("Red ").color("red").then("Bold").color("red").bold().build();
 
@@ -231,9 +229,7 @@ result = mctext.render(fonts, text, 256, 64, options)
 ### JavaScript
 
 ```javascript
-import init, { MCText, FontSystem, LayoutOptions, render } from '@hexze/mctext';
-
-await init();
+const { MCText, FontSystem, LayoutOptions, render } = require('@hexze/mctext');
 
 let text = new MCText().span("Hello ").color("red").then("World").color("red").bold().build();
 

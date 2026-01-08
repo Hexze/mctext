@@ -25,7 +25,7 @@ jobs:
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Build WASM
-        run: wasm-pack build bindings/wasm --target web --scope hexze
+        run: wasm-pack build bindings/wasm --target nodejs --scope hexze
 
       - name: Set package name to @hexze/mctext
         run: jq '.name = "@hexze/mctext"' package.json > tmp.json && mv tmp.json package.json
