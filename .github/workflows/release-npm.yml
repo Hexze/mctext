@@ -27,8 +27,8 @@ jobs:
       - name: Build WASM
         run: wasm-pack build bindings/wasm --target nodejs --scope hexze
 
-      - name: Set package name to @hexze/mctext
-        run: jq '.name = "@hexze/mctext"' package.json > tmp.json && mv tmp.json package.json
+      - name: Set package name and remove ESM type
+        run: jq '.name = "@hexze/mctext" | del(.type) | del(.sideEffects)' package.json > tmp.json && mv tmp.json package.json
         working-directory: bindings/wasm/pkg
 
       - name: Publish to npm

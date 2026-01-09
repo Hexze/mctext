@@ -1,11 +1,6 @@
-import { writeFileSync } from "fs";
-import { createCanvas } from "canvas";
-import {
-  MCText,
-  FontSystem,
-  LayoutOptions,
-  render,
-} from "../bindings/wasm/pkg/mctext_wasm.js";
+const { writeFileSync } = require("fs");
+const { createCanvas } = require("canvas");
+const { MCText, FontSystem, LayoutOptions, render } = require("@hexze/mctext");
 
 class TextRenderer {
   constructor() {
