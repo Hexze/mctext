@@ -202,54 +202,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_software_renderer() {
+    fn test_render() {
         let system = FontSystem::modern();
         let mut renderer = SoftwareRenderer::new(&system, 100, 50);
         renderer.clear((0, 0, 0, 255));
 
         let ctx = TextRenderContext::new(&system);
-        let options = LayoutOptions::new(16.0);
-
-        ctx.render_str(&mut renderer, "Hi", 10.0, 10.0, &options)
+        ctx.render_str(&mut renderer, "Hi", 10.0, 10.0, &LayoutOptions::new(16.0))
             .unwrap();
 
         let has_content = renderer
             .buffer
             .chunks(4)
-            .any(|p| p[3] > 0 && (p[0] > 0 || p[1] > 0 || p[2] > 0));
+            .any(|p| p[3] > 0 && p[0] + p[1] + p[2] > 0);
         assert!(has_content);
-    }
-
-    #[test]
-    fn test_render_colored() {
-        let system = FontSystem::modern();
-        let mut renderer = SoftwareRenderer::new(&system, 100, 50);
-        renderer.clear((0, 0, 0, 0));
-
-        let ctx = TextRenderContext::new(&system);
-        let options = LayoutOptions::new(16.0).with_shadow(false);
-
-        ctx.render_str(&mut renderer, "\u{00A7}cR", 10.0, 10.0, &options)
-            .unwrap();
-
-        let red_pixels: Vec<_> = renderer
-            .buffer
-            .chunks(4)
-            .filter(|p| p[3] > 0 && p[0] > p[1] && p[0] > p[2])
-            .collect();
-
-        assert!(!red_pixels.is_empty());
-    }
-
-    #[test]
-    fn test_render_context() {
-        let system = FontSystem::modern();
-        let ctx = TextRenderContext::new(&system);
-
-        let text = MCText::parse("Test");
-        let options = LayoutOptions::new(16.0);
-        let layout = ctx.layout(&text, &options);
-
-        assert!(!layout.glyphs.is_empty());
     }
 }

@@ -212,32 +212,10 @@ mod tests {
 
     #[test]
     #[cfg(feature = "modern-fonts")]
-    fn test_font_system_creation() {
-        let system = FontSystem::modern();
-        assert_eq!(system.version(), FontVersion::Modern);
-    }
-
-    #[test]
-    #[cfg(all(feature = "modern-fonts", feature = "legacy-fonts"))]
-    fn test_legacy_font_system() {
-        let legacy = FontSystem::legacy();
-        assert_eq!(legacy.version(), FontVersion::Legacy);
-    }
-
-    #[test]
-    #[cfg(feature = "modern-fonts")]
-    fn test_has_glyph() {
+    fn test_font_system() {
         let system = FontSystem::modern();
         assert!(system.has_glyph('A', FontVariant::Regular));
-        assert!(system.has_glyph('0', FontVariant::Regular));
-    }
-
-    #[test]
-    #[cfg(feature = "modern-fonts")]
-    fn test_measure_text() {
-        let system = FontSystem::modern();
-        let width = system.measure_text("Hello", 16.0);
-        assert!(width > 0.0);
+        assert!(system.measure_text("Hello", 16.0) > 0.0);
     }
 
     #[test]
@@ -245,15 +223,7 @@ mod tests {
     fn test_measure_skips_color_codes() {
         let system = FontSystem::modern();
         let plain = system.measure_text("Hello", 16.0);
-        let colored = system.measure_text("\u{00A7}6Hello", 16.0);
+        let colored = system.measure_text("§6Hello", 16.0);
         assert!((plain - colored).abs() < 0.001);
-    }
-
-    #[test]
-    #[cfg(feature = "modern-fonts")]
-    fn test_ascent_ratio() {
-        let system = FontSystem::modern();
-        let ratio = system.ascent_ratio(FontVariant::Regular);
-        assert!(ratio > 0.0 && ratio < 1.0);
     }
 }

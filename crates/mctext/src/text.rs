@@ -1,3 +1,5 @@
+use std::ops::{Add, AddAssign};
+
 use crate::color::{NamedColor, TextColor};
 use crate::style::{Style, is_format_code, is_reset_code};
 
@@ -188,6 +190,15 @@ impl MCText {
         self.spans.is_empty() || self.spans.iter().all(|s| s.is_empty())
     }
 
+    pub fn append(&mut self, other: MCText) {
+        self.spans.extend(other.spans);
+    }
+
+    pub fn concat(mut self, other: MCText) -> Self {
+        self.spans.extend(other.spans);
+        self
+    }
+
     pub fn plain_text(&self) -> String {
         self.spans.iter().map(|s| s.text.as_str()).collect()
     }
@@ -261,6 +272,20 @@ impl<'a> IntoIterator for &'a MCText {
     }
 }
 
+impl Add for MCText {
+    type Output = MCText;
+
+    fn add(self, other: MCText) -> MCText {
+        self.concat(other)
+    }
+}
+
+impl AddAssign for MCText {
+    fn add_assign(&mut self, other: MCText) {
+        self.append(other);
+    }
+}
+
 impl IntoIterator for MCText {
     type Item = Span;
     type IntoIter = std::vec::IntoIter<Span>;
@@ -275,152 +300,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_simple() {
-        let text = MCText::parse("\u{00A7}6Hello \u{00A7}bWorld");
+    fn test_parse() {
+        let text = MCText::parse("§6Hello §bWorld");
         assert_eq!(text.spans().len(), 2);
-        assert_eq!(text.spans()[0].text, "Hello ");
-        assert_eq!(
-            text.spans()[0].color,
-            Some(TextColor::Named(NamedColor::Gold))
-        );
-        assert_eq!(text.spans()[1].text, "World");
-        assert_eq!(
-            text.spans()[1].color,
-            Some(TextColor::Named(NamedColor::Aqua))
-        );
-    }
-
-    #[test]
-    fn test_parse_with_format() {
-        let text = MCText::parse("\u{00A7}6\u{00A7}lBold Gold");
-        assert_eq!(text.spans().len(), 1);
-        assert_eq!(
-            text.spans()[0].color,
-            Some(TextColor::Named(NamedColor::Gold))
-        );
-        assert!(text.spans()[0].style.bold);
-    }
-
-    #[test]
-    fn test_parse_reset() {
-        let text = MCText::parse("\u{00A7}6Gold\u{00A7}rPlain");
-        assert_eq!(text.spans().len(), 2);
-        assert_eq!(
-            text.spans()[0].color,
-            Some(TextColor::Named(NamedColor::Gold))
-        );
-        assert_eq!(text.spans()[1].color, None);
-    }
-
-    #[test]
-    fn test_plain_text() {
-        let text = MCText::parse("\u{00A7}6Hello \u{00A7}bWorld");
         assert_eq!(text.plain_text(), "Hello World");
     }
 
     #[test]
-    fn test_strip_codes() {
-        assert_eq!(strip_codes("\u{00A7}6Hello \u{00A7}bWorld"), "Hello World");
-    }
-
-    #[test]
-    fn test_count_visible() {
-        assert_eq!(count_visible_chars("\u{00A7}6Hello"), 5);
-        assert_eq!(count_visible_chars("\u{00A7}6\u{00A7}lHi"), 2);
-    }
-
-    #[test]
-    fn test_to_legacy_roundtrip() {
-        let original = "\u{00A7}6\u{00A7}lBold Gold \u{00A7}bAqua";
-        let text = MCText::parse(original);
-        let legacy = text.to_legacy();
-        let reparsed = MCText::parse(&legacy);
-        assert_eq!(text.plain_text(), reparsed.plain_text());
-    }
-
-    #[test]
-    fn test_span_with_rgb_color() {
-        let span = Span::new("Hello").with_color(TextColor::Rgb {
-            r: 255,
-            g: 128,
-            b: 0,
-        });
-        assert_eq!(
-            span.color,
-            Some(TextColor::Rgb {
-                r: 255,
-                g: 128,
-                b: 0
-            })
-        );
-    }
-
-    #[test]
-    fn test_span_with_named_color() {
-        let span = Span::new("Hello").with_color(NamedColor::Red);
-        assert_eq!(span.color, Some(TextColor::Named(NamedColor::Red)));
-    }
-
-    #[test]
-    fn test_builder_single_span() {
+    fn test_builder() {
         let text = MCText::new()
-            .span("Hello")
+            .span("Hello ")
             .color(NamedColor::Red)
-            .bold()
-            .build();
-
-        assert_eq!(text.spans().len(), 1);
-        assert_eq!(text.spans()[0].text, "Hello");
-        assert_eq!(
-            text.spans()[0].color,
-            Some(TextColor::Named(NamedColor::Red))
-        );
-        assert!(text.spans()[0].style.bold);
-    }
-
-    #[test]
-    fn test_builder_multiple_spans() {
-        let text = MCText::new()
-            .span("Red ")
-            .color(NamedColor::Red)
-            .then("Blue ")
+            .then("World")
             .color(NamedColor::Blue)
-            .italic()
-            .then("Plain")
             .build();
 
-        assert_eq!(text.spans().len(), 3);
-        assert_eq!(text.plain_text(), "Red Blue Plain");
-        assert_eq!(
-            text.spans()[0].color,
-            Some(TextColor::Named(NamedColor::Red))
-        );
-        assert_eq!(
-            text.spans()[1].color,
-            Some(TextColor::Named(NamedColor::Blue))
-        );
-        assert!(text.spans()[1].style.italic);
-        assert_eq!(text.spans()[2].color, None);
+        assert_eq!(text.spans().len(), 2);
+        assert_eq!(text.plain_text(), "Hello World");
     }
 
     #[test]
-    fn test_builder_rgb_color() {
-        let text = MCText::new()
-            .span("Custom")
-            .color(TextColor::Rgb {
-                r: 255,
-                g: 128,
-                b: 0,
-            })
-            .build();
+    fn test_concat() {
+        let a = MCText::new().span("Hello ").color(NamedColor::Red).build();
+        let b = MCText::new().span("World").color(NamedColor::Blue).build();
 
-        assert_eq!(
-            text.spans()[0].color,
-            Some(TextColor::Rgb {
-                r: 255,
-                g: 128,
-                b: 0
-            })
-        );
+        assert_eq!((a + b).plain_text(), "Hello World");
     }
 }

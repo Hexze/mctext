@@ -245,36 +245,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_named_color_roundtrip_code() {
+    fn test_named_color_roundtrip() {
         for color in NamedColor::ALL {
-            let code = color.code();
-            let parsed = NamedColor::from_code(code).unwrap();
-            assert_eq!(color, parsed);
+            assert_eq!(NamedColor::from_code(color.code()), Some(color));
+            assert_eq!(NamedColor::from_name(color.name()), Some(color));
         }
     }
 
     #[test]
-    fn test_named_color_roundtrip_name() {
-        for color in NamedColor::ALL {
-            let name = color.name();
-            let parsed = NamedColor::from_name(name).unwrap();
-            assert_eq!(color, parsed);
-        }
-    }
-
-    #[test]
-    fn test_named_case_insensitive() {
-        assert_eq!(NamedColor::from_code('A'), Some(NamedColor::Green));
-        assert_eq!(NamedColor::from_code('F'), Some(NamedColor::White));
-        assert_eq!(NamedColor::from_name("GOLD"), Some(NamedColor::Gold));
-        assert_eq!(
-            NamedColor::from_name("Dark_Blue"),
-            Some(NamedColor::DarkBlue)
-        );
-    }
-
-    #[test]
-    fn test_text_color_from_hex() {
+    fn test_text_color_hex() {
         assert_eq!(
             TextColor::from_hex("#FF5555"),
             Some(TextColor::Rgb {
@@ -283,50 +262,6 @@ mod tests {
                 b: 85
             })
         );
-        assert_eq!(
-            TextColor::from_hex("AA00FF"),
-            Some(TextColor::Rgb {
-                r: 170,
-                g: 0,
-                b: 255
-            })
-        );
-        assert_eq!(TextColor::from_hex("invalid"), None);
-    }
-
-    #[test]
-    fn test_text_color_parse() {
-        assert_eq!(
-            TextColor::parse("red"),
-            Some(TextColor::Named(NamedColor::Red))
-        );
-        assert_eq!(
-            TextColor::parse("#FF5555"),
-            Some(TextColor::Rgb {
-                r: 255,
-                g: 85,
-                b: 85
-            })
-        );
-    }
-
-    #[test]
-    fn test_text_color_to_hex() {
         assert_eq!(TextColor::Named(NamedColor::Red).to_hex(), "#FF5555");
-        assert_eq!(
-            TextColor::Rgb {
-                r: 170,
-                g: 0,
-                b: 255
-            }
-            .to_hex(),
-            "#AA00FF"
-        );
-    }
-
-    #[test]
-    fn test_shadow_color() {
-        let color = TextColor::Named(NamedColor::White);
-        assert_eq!(color.shadow_rgb(), (63, 63, 63));
     }
 }

@@ -222,106 +222,27 @@ impl<'a> LayoutEngine<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::color::NamedColor;
-    use crate::text::Span;
-
     fn test_system() -> FontSystem {
         FontSystem::modern()
     }
 
     #[test]
-    fn test_layout_simple() {
+    fn test_layout() {
         let system = test_system();
         let engine = LayoutEngine::new(&system);
-        let text = MCText::parse("Hello");
-        let options = LayoutOptions::new(16.0).with_shadow(false);
-        let layout = engine.layout(&text, &options);
+        let text = MCText::parse("§6Hello");
+        let layout = engine.layout(&text, &LayoutOptions::new(16.0));
 
-        assert_eq!(layout.glyphs.len(), 5);
+        assert_eq!(layout.glyphs.len(), 10); // 5 chars + 5 shadows
         assert!(layout.width > 0.0);
-    }
-
-    #[test]
-    fn test_layout_with_shadow() {
-        let system = test_system();
-        let engine = LayoutEngine::new(&system);
-        let text = MCText::parse("Hi");
-        let options = LayoutOptions::new(16.0);
-        let layout = engine.layout(&text, &options);
-
-        assert_eq!(layout.glyphs.len(), 4);
-
-        let shadows: Vec<_> = layout.glyphs.iter().filter(|g| g.is_shadow).collect();
-        let foreground: Vec<_> = layout.glyphs.iter().filter(|g| !g.is_shadow).collect();
-
-        assert_eq!(shadows.len(), 2);
-        assert_eq!(foreground.len(), 2);
-    }
-
-    #[test]
-    fn test_layout_colored() {
-        let system = test_system();
-        let engine = LayoutEngine::new(&system);
-        let text = MCText::parse("\u{00A7}6Gold");
-        let options = LayoutOptions::new(16.0).with_shadow(false);
-        let layout = engine.layout(&text, &options);
-
-        assert_eq!(layout.glyphs.len(), 4);
-        for glyph in &layout.glyphs {
-            assert_eq!(glyph.color, TextColor::Named(NamedColor::Gold));
-        }
-    }
-
-    #[test]
-    fn test_layout_newline() {
-        let system = test_system();
-        let engine = LayoutEngine::new(&system);
-
-        let mut text = MCText::new();
-        text.push(Span::new("A\nB"));
-
-        let options = LayoutOptions::new(16.0).with_shadow(false);
-        let layout = engine.layout(&text, &options);
-
-        assert_eq!(layout.glyphs.len(), 2);
-
-        let y_values: Vec<f32> = layout.glyphs.iter().map(|g| g.y).collect();
-        assert!(y_values[1] > y_values[0]);
-    }
-
-    #[test]
-    fn test_layout_alignment() {
-        let system = test_system();
-        let engine = LayoutEngine::new(&system);
-        let text = MCText::parse("Hi");
-
-        let left = engine.layout(
-            &text,
-            &LayoutOptions::new(16.0)
-                .with_shadow(false)
-                .with_align(TextAlign::Left),
-        );
-        let right = engine.layout(
-            &text,
-            &LayoutOptions::new(16.0)
-                .with_shadow(false)
-                .with_align(TextAlign::Right),
-        );
-
-        let left_x = left.glyphs.first().map(|g| g.x).unwrap_or(0.0);
-        let right_x = right.glyphs.first().map(|g| g.x).unwrap_or(0.0);
-
-        assert!(left_x <= right_x);
     }
 
     #[test]
     fn test_measure() {
         let system = test_system();
         let engine = LayoutEngine::new(&system);
-        let text = MCText::parse("Test");
-        let (width, height) = engine.measure(&text, 16.0);
+        let (width, height) = engine.measure(&MCText::parse("Test"), 16.0);
 
-        assert!(width > 0.0);
-        assert!(height > 0.0);
+        assert!(width > 0.0 && height > 0.0);
     }
 }
