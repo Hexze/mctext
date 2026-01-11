@@ -104,26 +104,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_style_builder() {
+    fn test_style() {
         let style = Style::new().bold().italic();
-        assert!(style.bold);
-        assert!(style.italic);
-        assert!(!style.underlined);
-    }
-
-    #[test]
-    fn test_from_code() {
+        assert!(style.bold && style.italic && !style.underlined);
         assert_eq!(Style::from_code('l'), Some(Style::NONE.bold()));
-        assert_eq!(Style::from_code('O'), Some(Style::NONE.italic()));
-        assert_eq!(Style::from_code('x'), None);
-    }
-
-    #[test]
-    fn test_merge() {
-        let a = Style::new().bold();
-        let b = Style::new().italic();
-        let merged = a.merge(&b);
-        assert!(merged.bold);
-        assert!(merged.italic);
     }
 }

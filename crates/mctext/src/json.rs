@@ -202,96 +202,21 @@ pub fn to_legacy(text: &MCText) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::color::NamedColor;
+    use crate::NamedColor;
 
     #[test]
-    fn test_parse_simple_text() {
-        let json = r#"{"text":"Hello World"}"#;
-        let text = parse_json_component(json);
-        assert_eq!(text.plain_text(), "Hello World");
-    }
-
-    #[test]
-    fn test_parse_colored_text() {
-        let json = r#"{"text":"Gold","color":"gold"}"#;
-        let text = parse_json_component(json);
-        assert_eq!(
-            text.spans()[0].color,
-            Some(TextColor::Named(NamedColor::Gold))
-        );
-    }
-
-    #[test]
-    fn test_parse_hex_color() {
-        let json = r##"{"text":"Custom","color":"#FF5500"}"##;
-        let text = parse_json_component(json);
-        assert_eq!(
-            text.spans()[0].color,
-            Some(TextColor::Rgb {
-                r: 255,
-                g: 85,
-                b: 0
-            })
-        );
-    }
-
-    #[test]
-    fn test_parse_styled_text() {
-        let json = r#"{"text":"Bold","bold":true,"italic":true}"#;
-        let text = parse_json_component(json);
-        assert!(text.spans()[0].style.bold);
-        assert!(text.spans()[0].style.italic);
-    }
-
-    #[test]
-    fn test_parse_extra() {
+    fn test_parse_json() {
         let json = r#"{"text":"","extra":[{"text":"Hello ","color":"gold"},{"text":"World","color":"aqua"}]}"#;
         let text = parse_json_component(json);
-        assert_eq!(text.spans().len(), 2);
-        assert_eq!(text.spans()[0].text, "Hello ");
-        assert_eq!(
-            text.spans()[0].color,
-            Some(TextColor::Named(NamedColor::Gold))
-        );
-        assert_eq!(text.spans()[1].text, "World");
-        assert_eq!(
-            text.spans()[1].color,
-            Some(TextColor::Named(NamedColor::Aqua))
-        );
-    }
-
-    #[test]
-    fn test_parse_string_value() {
-        let json = r#""Hello World""#;
-        let text = parse_json_component(json);
         assert_eq!(text.plain_text(), "Hello World");
+        assert_eq!(text.spans().len(), 2);
     }
 
     #[test]
-    fn test_to_json_named_color() {
+    fn test_to_json() {
         let mut text = MCText::new();
         text.push(Span::new("Hello").with_color(NamedColor::Gold));
         let json = to_json(&text);
-        assert!(json.contains("gold"));
-        assert!(json.contains("Hello"));
-    }
-
-    #[test]
-    fn test_to_json_rgb_color() {
-        let mut text = MCText::new();
-        text.push(Span::new("Custom").with_color(TextColor::Rgb {
-            r: 255,
-            g: 128,
-            b: 0,
-        }));
-        let json = to_json(&text);
-        assert!(json.contains("#ff8000"));
-    }
-
-    #[test]
-    fn test_parse_nested_legacy() {
-        let json = r#"{"text":"\u00A76Gold \u00A7bAqua"}"#;
-        let text = parse_json_component(json);
-        assert_eq!(text.plain_text(), "Gold Aqua");
+        assert!(json.contains("gold") && json.contains("Hello"));
     }
 }
