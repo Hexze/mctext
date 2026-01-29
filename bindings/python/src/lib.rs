@@ -388,16 +388,19 @@ mod rendering {
         height: u32,
         options: &LayoutOptions,
     ) -> RenderResult {
-        let ctx = TextRenderContext::new(&font_system.inner);
-        let mut renderer =
-            SoftwareRenderer::new(&font_system.inner, width as usize, height as usize);
+        let (w, h) = (width as usize, height as usize);
+        let mut buffer = vec![0u8; w * h * 4];
 
-        let _ = ctx.render(&mut renderer, &text.inner, 0.0, 0.0, &options.to_rust());
+        {
+            let mut renderer = SoftwareRenderer::new(&font_system.inner, &mut buffer, w, h);
+            let ctx = TextRenderContext::new(&font_system.inner);
+            let _ = ctx.render(&mut renderer, &text.inner, 0.0, 0.0, &options.to_rust());
+        }
 
         RenderResult {
             width,
             height,
-            data: renderer.buffer,
+            data: buffer,
         }
     }
 

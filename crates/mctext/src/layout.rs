@@ -3,6 +3,8 @@ use crate::fonts::FontVariant;
 use crate::system::FontSystem;
 use crate::text::MCText;
 
+const SHADOW_OFFSET_RATIO: f32 = 1.0 / 12.0;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum TextAlign {
     #[default]
@@ -27,7 +29,7 @@ impl Default for LayoutOptions {
             max_width: None,
             align: TextAlign::Left,
             shadow: true,
-            line_spacing: 2.0,
+            line_spacing: -1.0,
         }
     }
 }
@@ -52,6 +54,11 @@ impl LayoutOptions {
 
     pub fn with_shadow(mut self, shadow: bool) -> Self {
         self.shadow = shadow;
+        self
+    }
+
+    pub fn with_line_spacing(mut self, spacing: f32) -> Self {
+        self.line_spacing = spacing;
         self
     }
 }
@@ -111,8 +118,7 @@ impl<'a> LayoutEngine<'a> {
         let mut max_width = 0.0f32;
 
         let ascent = self.font_system.ascent_ratio(FontVariant::Regular) * options.size;
-        let line_height = options.size + options.line_spacing;
-        let shadow_offset = options.size / 12.0;
+        let shadow_offset = options.size * SHADOW_OFFSET_RATIO;
 
         for span in text.spans() {
             let color = span.color.unwrap_or(default_color);
@@ -160,7 +166,9 @@ impl<'a> LayoutEngine<'a> {
 
         max_width = max_width.max(cursor_x);
 
-        let total_height = lines.len() as f32 * line_height;
+        let line_count = lines.len() as f32;
+        let gap_count = (lines.len().saturating_sub(1)) as f32;
+        let total_height = line_count * options.size + gap_count * options.line_spacing;
         let mut current_y = y + ascent;
 
         for line in &lines {
@@ -202,7 +210,7 @@ impl<'a> LayoutEngine<'a> {
                 });
             }
 
-            current_y += line_height;
+            current_y += options.size + options.line_spacing;
         }
 
         TextLayout {

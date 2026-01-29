@@ -1,7 +1,7 @@
 use crate::color::TextColor;
 use crate::style::Style;
 use crate::text::{MCText, Span};
-use serde_json::Value;
+use serde_json::{Map, Value};
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -35,6 +35,66 @@ pub fn parse_value(value: &Value) -> MCText {
     text
 }
 
+fn extract_color(obj: &Map<String, Value>, fallback: Option<TextColor>) -> Option<TextColor> {
+    obj.get("color")
+        .and_then(|v| v.as_str())
+        .and_then(TextColor::parse)
+        .or(fallback)
+}
+
+fn extract_style(obj: &Map<String, Value>, parent: &Style) -> Style {
+    let get_bool = |key: &str, default: bool| -> bool {
+        obj.get(key).and_then(|v| v.as_bool()).unwrap_or(default)
+    };
+
+    Style {
+        bold: get_bool("bold", parent.bold),
+        italic: get_bool("italic", parent.italic),
+        underlined: get_bool("underlined", parent.underlined),
+        strikethrough: get_bool("strikethrough", parent.strikethrough),
+        obfuscated: get_bool("obfuscated", parent.obfuscated),
+    }
+}
+
+fn push_text_with_inheritance(
+    content: &str,
+    color: Option<TextColor>,
+    style: Style,
+    text: &mut MCText,
+) {
+    if content.is_empty() {
+        return;
+    }
+
+    let parsed = MCText::parse(content);
+    if parsed.is_empty() {
+        text.push(Span {
+            text: content.to_string(),
+            color,
+            style,
+        });
+        return;
+    }
+
+    let has_color_codes = parsed.spans().iter().any(|s| s.color.is_some());
+    if !has_color_codes {
+        text.push(Span {
+            text: content.to_string(),
+            color,
+            style,
+        });
+        return;
+    }
+
+    for mut span in parsed.into_spans() {
+        if span.color.is_none() {
+            span.color = color;
+        }
+        span.style = span.style.merge(&style);
+        text.push(span);
+    }
+}
+
 fn extract_spans(
     value: &Value,
     parent_color: Option<TextColor>,
@@ -43,76 +103,14 @@ fn extract_spans(
 ) {
     match value {
         Value::String(s) => {
-            if !s.is_empty() {
-                let parsed = MCText::parse(s);
-                if parsed.is_empty() {
-                    text.push(Span {
-                        text: s.clone(),
-                        color: parent_color,
-                        style: parent_style,
-                    });
-                } else {
-                    for mut span in parsed.into_spans() {
-                        if span.color.is_none() {
-                            span.color = parent_color;
-                        }
-                        if span.style.is_empty() {
-                            span.style = parent_style;
-                        }
-                        text.push(span);
-                    }
-                }
-            }
+            push_text_with_inheritance(s, parent_color, parent_style, text);
         }
         Value::Object(obj) => {
-            let color = obj
-                .get("color")
-                .and_then(|v| v.as_str())
-                .and_then(TextColor::parse)
-                .or(parent_color);
-
-            let style = Style {
-                bold: obj
-                    .get("bold")
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(parent_style.bold),
-                italic: obj
-                    .get("italic")
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(parent_style.italic),
-                underlined: obj
-                    .get("underlined")
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(parent_style.underlined),
-                strikethrough: obj
-                    .get("strikethrough")
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(parent_style.strikethrough),
-                obfuscated: obj
-                    .get("obfuscated")
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(parent_style.obfuscated),
-            };
+            let color = extract_color(obj, parent_color);
+            let style = extract_style(obj, &parent_style);
 
             if let Some(t) = obj.get("text").and_then(|v| v.as_str()) {
-                if !t.is_empty() {
-                    let parsed = MCText::parse(t);
-                    if parsed.is_empty() || parsed.spans().iter().all(|s| s.color.is_none()) {
-                        text.push(Span {
-                            text: t.to_string(),
-                            color,
-                            style,
-                        });
-                    } else {
-                        for mut span in parsed.into_spans() {
-                            if span.color.is_none() {
-                                span.color = color;
-                            }
-                            span.style = span.style.merge(&style);
-                            text.push(span);
-                        }
-                    }
-                }
+                push_text_with_inheritance(t, color, style, text);
             }
 
             if let Some(translate) = obj.get("translate").and_then(|v| v.as_str()) {

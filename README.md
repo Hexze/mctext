@@ -205,11 +205,16 @@ let text = MCText::new()
     .build();
 
 let fonts = FontSystem::new(FontVersion::Modern);
-let ctx = TextRenderContext::new(&fonts);
-let mut renderer = SoftwareRenderer::new(&fonts, 256, 64);
+let (width, height) = (256, 64);
+let mut buffer = vec![0u8; width * height * 4];
 
-ctx.render(&mut renderer, &text, 0.0, 0.0, &LayoutOptions::new(16.0).with_shadow(true));
-// renderer.buffer contains RGBA pixel data
+{
+    let mut renderer = SoftwareRenderer::new(&fonts, &mut buffer, width, height);
+    let ctx = TextRenderContext::new(&fonts);
+    ctx.render(&mut renderer, &text, 0.0, 0.0, &LayoutOptions::new(16.0).with_shadow(true))
+        .unwrap();
+}
+// buffer contains RGBA pixel data
 ```
 
 ### Python

@@ -24,6 +24,112 @@ pub enum NamedColor {
     White,
 }
 
+struct ColorData {
+    color: NamedColor,
+    code: char,
+    name: &'static str,
+    rgb: (u8, u8, u8),
+}
+
+const COLOR_TABLE: [ColorData; 16] = [
+    ColorData {
+        color: NamedColor::Black,
+        code: '0',
+        name: "black",
+        rgb: (0, 0, 0),
+    },
+    ColorData {
+        color: NamedColor::DarkBlue,
+        code: '1',
+        name: "dark_blue",
+        rgb: (0, 0, 170),
+    },
+    ColorData {
+        color: NamedColor::DarkGreen,
+        code: '2',
+        name: "dark_green",
+        rgb: (0, 170, 0),
+    },
+    ColorData {
+        color: NamedColor::DarkAqua,
+        code: '3',
+        name: "dark_aqua",
+        rgb: (0, 170, 170),
+    },
+    ColorData {
+        color: NamedColor::DarkRed,
+        code: '4',
+        name: "dark_red",
+        rgb: (170, 0, 0),
+    },
+    ColorData {
+        color: NamedColor::DarkPurple,
+        code: '5',
+        name: "dark_purple",
+        rgb: (170, 0, 170),
+    },
+    ColorData {
+        color: NamedColor::Gold,
+        code: '6',
+        name: "gold",
+        rgb: (255, 170, 0),
+    },
+    ColorData {
+        color: NamedColor::Gray,
+        code: '7',
+        name: "gray",
+        rgb: (170, 170, 170),
+    },
+    ColorData {
+        color: NamedColor::DarkGray,
+        code: '8',
+        name: "dark_gray",
+        rgb: (85, 85, 85),
+    },
+    ColorData {
+        color: NamedColor::Blue,
+        code: '9',
+        name: "blue",
+        rgb: (85, 85, 255),
+    },
+    ColorData {
+        color: NamedColor::Green,
+        code: 'a',
+        name: "green",
+        rgb: (85, 255, 85),
+    },
+    ColorData {
+        color: NamedColor::Aqua,
+        code: 'b',
+        name: "aqua",
+        rgb: (85, 255, 255),
+    },
+    ColorData {
+        color: NamedColor::Red,
+        code: 'c',
+        name: "red",
+        rgb: (255, 85, 85),
+    },
+    ColorData {
+        color: NamedColor::LightPurple,
+        code: 'd',
+        name: "light_purple",
+        rgb: (255, 85, 255),
+    },
+    ColorData {
+        color: NamedColor::Yellow,
+        code: 'e',
+        name: "yellow",
+        rgb: (255, 255, 85),
+    },
+    ColorData {
+        color: NamedColor::White,
+        code: 'f',
+        name: "white",
+        rgb: (255, 255, 255),
+    },
+];
+
 impl NamedColor {
     pub const ALL: [NamedColor; 16] = [
         NamedColor::Black,
@@ -44,111 +150,38 @@ impl NamedColor {
         NamedColor::White,
     ];
 
+    fn data(self) -> &'static ColorData {
+        &COLOR_TABLE[self as usize]
+    }
+
     pub fn rgb(self) -> (u8, u8, u8) {
-        match self {
-            NamedColor::Black => (0, 0, 0),
-            NamedColor::DarkBlue => (0, 0, 170),
-            NamedColor::DarkGreen => (0, 170, 0),
-            NamedColor::DarkAqua => (0, 170, 170),
-            NamedColor::DarkRed => (170, 0, 0),
-            NamedColor::DarkPurple => (170, 0, 170),
-            NamedColor::Gold => (255, 170, 0),
-            NamedColor::Gray => (170, 170, 170),
-            NamedColor::DarkGray => (85, 85, 85),
-            NamedColor::Blue => (85, 85, 255),
-            NamedColor::Green => (85, 255, 85),
-            NamedColor::Aqua => (85, 255, 255),
-            NamedColor::Red => (255, 85, 85),
-            NamedColor::LightPurple => (255, 85, 255),
-            NamedColor::Yellow => (255, 255, 85),
-            NamedColor::White => (255, 255, 255),
-        }
+        self.data().rgb
     }
 
     pub fn code(self) -> char {
-        match self {
-            NamedColor::Black => '0',
-            NamedColor::DarkBlue => '1',
-            NamedColor::DarkGreen => '2',
-            NamedColor::DarkAqua => '3',
-            NamedColor::DarkRed => '4',
-            NamedColor::DarkPurple => '5',
-            NamedColor::Gold => '6',
-            NamedColor::Gray => '7',
-            NamedColor::DarkGray => '8',
-            NamedColor::Blue => '9',
-            NamedColor::Green => 'a',
-            NamedColor::Aqua => 'b',
-            NamedColor::Red => 'c',
-            NamedColor::LightPurple => 'd',
-            NamedColor::Yellow => 'e',
-            NamedColor::White => 'f',
-        }
+        self.data().code
     }
 
     pub fn name(self) -> &'static str {
-        match self {
-            NamedColor::Black => "black",
-            NamedColor::DarkBlue => "dark_blue",
-            NamedColor::DarkGreen => "dark_green",
-            NamedColor::DarkAqua => "dark_aqua",
-            NamedColor::DarkRed => "dark_red",
-            NamedColor::DarkPurple => "dark_purple",
-            NamedColor::Gold => "gold",
-            NamedColor::Gray => "gray",
-            NamedColor::DarkGray => "dark_gray",
-            NamedColor::Blue => "blue",
-            NamedColor::Green => "green",
-            NamedColor::Aqua => "aqua",
-            NamedColor::Red => "red",
-            NamedColor::LightPurple => "light_purple",
-            NamedColor::Yellow => "yellow",
-            NamedColor::White => "white",
-        }
+        self.data().name
     }
 
     pub fn from_code(code: char) -> Option<NamedColor> {
-        match code.to_ascii_lowercase() {
-            '0' => Some(NamedColor::Black),
-            '1' => Some(NamedColor::DarkBlue),
-            '2' => Some(NamedColor::DarkGreen),
-            '3' => Some(NamedColor::DarkAqua),
-            '4' => Some(NamedColor::DarkRed),
-            '5' => Some(NamedColor::DarkPurple),
-            '6' => Some(NamedColor::Gold),
-            '7' => Some(NamedColor::Gray),
-            '8' => Some(NamedColor::DarkGray),
-            '9' => Some(NamedColor::Blue),
-            'a' => Some(NamedColor::Green),
-            'b' => Some(NamedColor::Aqua),
-            'c' => Some(NamedColor::Red),
-            'd' => Some(NamedColor::LightPurple),
-            'e' => Some(NamedColor::Yellow),
-            'f' => Some(NamedColor::White),
-            _ => None,
-        }
+        let code = code.to_ascii_lowercase();
+        COLOR_TABLE.iter().find(|d| d.code == code).map(|d| d.color)
     }
 
     pub fn from_name(name: &str) -> Option<NamedColor> {
-        match name.to_lowercase().as_str() {
-            "black" => Some(NamedColor::Black),
-            "dark_blue" => Some(NamedColor::DarkBlue),
-            "dark_green" => Some(NamedColor::DarkGreen),
-            "dark_aqua" => Some(NamedColor::DarkAqua),
-            "dark_red" => Some(NamedColor::DarkRed),
-            "dark_purple" => Some(NamedColor::DarkPurple),
-            "gold" => Some(NamedColor::Gold),
-            "gray" | "grey" => Some(NamedColor::Gray),
-            "dark_gray" | "dark_grey" => Some(NamedColor::DarkGray),
-            "blue" => Some(NamedColor::Blue),
-            "green" => Some(NamedColor::Green),
-            "aqua" => Some(NamedColor::Aqua),
-            "red" => Some(NamedColor::Red),
-            "light_purple" => Some(NamedColor::LightPurple),
-            "yellow" => Some(NamedColor::Yellow),
-            "white" => Some(NamedColor::White),
-            _ => None,
-        }
+        let name_lower = name.to_lowercase();
+        let lookup = match name_lower.as_str() {
+            "grey" => "gray",
+            "dark_grey" => "dark_gray",
+            _ => &name_lower,
+        };
+        COLOR_TABLE
+            .iter()
+            .find(|d| d.name == lookup)
+            .map(|d| d.color)
     }
 }
 

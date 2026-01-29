@@ -6,6 +6,9 @@ use fontdue::{Font, FontSettings, Metrics};
 #[cfg(feature = "special-fonts")]
 use std::sync::OnceLock;
 
+const SPACE_WIDTH_RATIO: f32 = 0.4;
+const DEFAULT_ASCENT_RATIO: f32 = 0.8;
+
 pub struct GlyphMetrics {
     pub advance_width: f32,
     pub width: usize,
@@ -123,7 +126,7 @@ impl FontSystem {
 
     pub fn measure_char_family(&self, ch: char, size: f32, family: FontFamily) -> f32 {
         if ch == ' ' {
-            size * 0.4
+            size * SPACE_WIDTH_RATIO
         } else {
             self.font_for_family(family).metrics(ch, size).advance_width
         }
@@ -138,7 +141,7 @@ impl FontSystem {
                 continue;
             }
             if ch == ' ' {
-                width += size * 0.4;
+                width += size * SPACE_WIDTH_RATIO;
             } else {
                 width += font.metrics(ch, size).advance_width;
             }
@@ -165,12 +168,12 @@ impl FontSystem {
         self.font(variant)
             .horizontal_line_metrics(size)
             .map(|m| m.ascent / size)
-            .unwrap_or(0.8)
+            .unwrap_or(DEFAULT_ASCENT_RATIO)
     }
 
     pub fn measure_char(&self, ch: char, size: f32, variant: FontVariant) -> f32 {
         if ch == ' ' {
-            size * 0.4
+            size * SPACE_WIDTH_RATIO
         } else {
             self.metrics(ch, size, variant).advance_width
         }

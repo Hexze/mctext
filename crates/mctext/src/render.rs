@@ -97,27 +97,28 @@ pub struct RasterizedGlyph {
 
 pub struct SoftwareRenderer<'a> {
     font_system: &'a FontSystem,
-    pub buffer: Vec<u8>,
-    pub width: usize,
-    pub height: usize,
+    buffer: &'a mut [u8],
+    width: usize,
+    height: usize,
 }
 
 impl<'a> SoftwareRenderer<'a> {
-    pub fn new(font_system: &'a FontSystem, width: usize, height: usize) -> Self {
+    pub fn new(
+        font_system: &'a FontSystem,
+        buffer: &'a mut [u8],
+        width: usize,
+        height: usize,
+    ) -> Self {
+        debug_assert_eq!(
+            buffer.len(),
+            width * height * 4,
+            "buffer size must match width * height * 4"
+        );
         Self {
             font_system,
-            buffer: vec![0; width * height * 4],
+            buffer,
             width,
             height,
-        }
-    }
-
-    pub fn clear(&mut self, color: (u8, u8, u8, u8)) {
-        for pixel in self.buffer.chunks_exact_mut(4) {
-            pixel[0] = color.0;
-            pixel[1] = color.1;
-            pixel[2] = color.2;
-            pixel[3] = color.3;
         }
     }
 
@@ -156,7 +157,7 @@ impl<'a> SoftwareRenderer<'a> {
     }
 }
 
-impl<'a> TextRenderer for SoftwareRenderer<'a> {
+impl TextRenderer for SoftwareRenderer<'_> {
     type Error = ();
 
     fn render_glyph(
@@ -204,17 +205,21 @@ mod tests {
     #[test]
     fn test_render() {
         let system = FontSystem::modern();
-        let mut renderer = SoftwareRenderer::new(&system, 100, 50);
-        renderer.clear((0, 0, 0, 255));
+        let (width, height) = (100, 50);
+        let mut buffer = vec![0u8; width * height * 4];
 
-        let ctx = TextRenderContext::new(&system);
-        ctx.render_str(&mut renderer, "Hi", 10.0, 10.0, &LayoutOptions::new(16.0))
-            .unwrap();
+        for pixel in buffer.chunks_exact_mut(4) {
+            pixel[3] = 255;
+        }
 
-        let has_content = renderer
-            .buffer
-            .chunks(4)
-            .any(|p| p[3] > 0 && p[0] + p[1] + p[2] > 0);
+        {
+            let mut renderer = SoftwareRenderer::new(&system, &mut buffer, width, height);
+            let ctx = TextRenderContext::new(&system);
+            ctx.render_str(&mut renderer, "Hi", 10.0, 10.0, &LayoutOptions::new(16.0))
+                .unwrap();
+        }
+
+        let has_content = buffer.chunks(4).any(|p| p[0] + p[1] + p[2] > 0);
         assert!(has_content);
     }
 }
