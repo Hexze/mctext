@@ -1,10 +1,30 @@
+use crate::fonts::{FontFamily, FontVariant, FontVersion};
+use fontdue::{Font, FontSettings, Metrics};
+use std::sync::OnceLock;
+
 #[cfg(feature = "special-fonts")]
 use crate::fonts::{ENCHANTING_REGULAR, ILLAGER_REGULAR};
-use crate::fonts::{FontFamily, FontVariant, FontVersion};
-use crate::style::Style;
-use fontdue::{Font, FontSettings, Metrics};
+
 #[cfg(feature = "special-fonts")]
-use std::sync::OnceLock;
+static ENCHANTING_FONT: OnceLock<Font> = OnceLock::new();
+#[cfg(feature = "special-fonts")]
+static ILLAGER_FONT: OnceLock<Font> = OnceLock::new();
+
+#[cfg(feature = "special-fonts")]
+fn enchanting_font() -> &'static Font {
+    ENCHANTING_FONT.get_or_init(|| {
+        Font::from_bytes(ENCHANTING_REGULAR, FontSettings::default())
+            .expect("Failed to load enchanting font")
+    })
+}
+
+#[cfg(feature = "special-fonts")]
+fn illager_font() -> &'static Font {
+    ILLAGER_FONT.get_or_init(|| {
+        Font::from_bytes(ILLAGER_REGULAR, FontSettings::default())
+            .expect("Failed to load illager font")
+    })
+}
 
 const SPACE_WIDTH_RATIO: f32 = 0.4;
 const DEFAULT_ASCENT_RATIO: f32 = 0.8;
@@ -29,52 +49,29 @@ impl From<Metrics> for GlyphMetrics {
     }
 }
 
-#[cfg(feature = "special-fonts")]
-static ENCHANTING_FONT: OnceLock<Font> = OnceLock::new();
-#[cfg(feature = "special-fonts")]
-static ILLAGER_FONT: OnceLock<Font> = OnceLock::new();
-
-#[cfg(feature = "special-fonts")]
-fn enchanting_font() -> &'static Font {
-    ENCHANTING_FONT.get_or_init(|| {
-        Font::from_bytes(ENCHANTING_REGULAR, FontSettings::default())
-            .expect("Failed to load enchanting font")
-    })
-}
-
-#[cfg(feature = "special-fonts")]
-fn illager_font() -> &'static Font {
-    ILLAGER_FONT.get_or_init(|| {
-        Font::from_bytes(ILLAGER_REGULAR, FontSettings::default())
-            .expect("Failed to load illager font")
-    })
-}
-
 pub struct FontSystem {
     version: FontVersion,
-    regular: Font,
-    bold: Font,
-    italic: Font,
-    bold_italic: Font,
+    regular: OnceLock<Font>,
+    bold: OnceLock<Font>,
+    italic: OnceLock<Font>,
+    bold_italic: OnceLock<Font>,
 }
 
 impl FontSystem {
     pub fn new(version: FontVersion) -> Self {
-        let settings = FontSettings::default();
         Self {
             version,
-            regular: Font::from_bytes(FontVariant::Regular.data_for_version(version), settings)
-                .expect("Failed to load regular font"),
-            bold: Font::from_bytes(FontVariant::Bold.data_for_version(version), settings)
-                .expect("Failed to load bold font"),
-            italic: Font::from_bytes(FontVariant::Italic.data_for_version(version), settings)
-                .expect("Failed to load italic font"),
-            bold_italic: Font::from_bytes(
-                FontVariant::BoldItalic.data_for_version(version),
-                settings,
-            )
-            .expect("Failed to load bold italic font"),
+            regular: OnceLock::new(),
+            bold: OnceLock::new(),
+            italic: OnceLock::new(),
+            bold_italic: OnceLock::new(),
         }
+    }
+
+    fn load_font(&self, variant: FontVariant) -> Font {
+        let settings = FontSettings::default();
+        Font::from_bytes(variant.data_for_version(self.version), settings)
+            .expect("Failed to load font")
     }
 
     #[cfg(feature = "modern-fonts")]
@@ -87,22 +84,22 @@ impl FontSystem {
         Self::new(FontVersion::Legacy)
     }
 
-    pub fn version(&self) -> FontVersion {
-        self.version
+    fn font(&self, variant: FontVariant) -> &Font {
+        match variant {
+            FontVariant::Regular => self.regular.get_or_init(|| self.load_font(variant)),
+            FontVariant::Bold => self.bold.get_or_init(|| self.load_font(variant)),
+            FontVariant::Italic => self.italic.get_or_init(|| self.load_font(variant)),
+            FontVariant::BoldItalic => self.bold_italic.get_or_init(|| self.load_font(variant)),
+        }
     }
 
-    pub fn font(&self, variant: FontVariant) -> &Font {
-        match variant {
-            FontVariant::Regular => &self.regular,
-            FontVariant::Bold => &self.bold,
-            FontVariant::Italic => &self.italic,
-            FontVariant::BoldItalic => &self.bold_italic,
-        }
+    fn metrics(&self, ch: char, size: f32, variant: FontVariant) -> GlyphMetrics {
+        self.font(variant).metrics(ch, size).into()
     }
 
     pub fn font_for_family(&self, family: FontFamily) -> &Font {
         match family {
-            FontFamily::Minecraft => &self.regular,
+            FontFamily::Minecraft => self.font(FontVariant::Regular),
             #[cfg(feature = "special-fonts")]
             FontFamily::Enchanting => enchanting_font(),
             #[cfg(feature = "special-fonts")]
@@ -110,8 +107,9 @@ impl FontSystem {
         }
     }
 
-    pub fn font_for_style(&self, style: &Style) -> &Font {
-        self.font(FontVariant::from_style(style.bold, style.italic))
+    pub fn rasterize(&self, ch: char, size: f32, variant: FontVariant) -> (GlyphMetrics, Vec<u8>) {
+        let (metrics, bitmap) = self.font(variant).rasterize(ch, size);
+        (metrics.into(), bitmap)
     }
 
     pub fn rasterize_family(
@@ -122,45 +120,6 @@ impl FontSystem {
     ) -> (GlyphMetrics, Vec<u8>) {
         let (metrics, bitmap) = self.font_for_family(family).rasterize(ch, size);
         (metrics.into(), bitmap)
-    }
-
-    pub fn measure_char_family(&self, ch: char, size: f32, family: FontFamily) -> f32 {
-        if ch == ' ' {
-            size * SPACE_WIDTH_RATIO
-        } else {
-            self.font_for_family(family).metrics(ch, size).advance_width
-        }
-    }
-
-    pub fn measure_text_family(&self, text: &str, size: f32, family: FontFamily) -> f32 {
-        let mut width = 0.0;
-        let font = self.font_for_family(family);
-
-        for ch in text.chars() {
-            if ch.is_control() {
-                continue;
-            }
-            if ch == ' ' {
-                width += size * SPACE_WIDTH_RATIO;
-            } else {
-                width += font.metrics(ch, size).advance_width;
-            }
-        }
-
-        width
-    }
-
-    pub fn metrics(&self, ch: char, size: f32, variant: FontVariant) -> GlyphMetrics {
-        self.font(variant).metrics(ch, size).into()
-    }
-
-    pub fn rasterize(&self, ch: char, size: f32, variant: FontVariant) -> (GlyphMetrics, Vec<u8>) {
-        let (metrics, bitmap) = self.font(variant).rasterize(ch, size);
-        (metrics.into(), bitmap)
-    }
-
-    pub fn has_glyph(&self, ch: char, variant: FontVariant) -> bool {
-        self.font(variant).lookup_glyph_index(ch) != 0
     }
 
     pub fn ascent_ratio(&self, variant: FontVariant) -> f32 {
@@ -176,6 +135,14 @@ impl FontSystem {
             size * SPACE_WIDTH_RATIO
         } else {
             self.metrics(ch, size, variant).advance_width
+        }
+    }
+
+    pub fn measure_char_family(&self, ch: char, size: f32, family: FontFamily) -> f32 {
+        if ch == ' ' {
+            size * SPACE_WIDTH_RATIO
+        } else {
+            self.font_for_family(family).metrics(ch, size).advance_width
         }
     }
 
@@ -200,6 +167,17 @@ impl FontSystem {
 
         width
     }
+
+    pub fn measure_text_family(&self, text: &str, size: f32, family: FontFamily) -> f32 {
+        let mut width = 0.0;
+        for ch in text.chars() {
+            if ch.is_control() {
+                continue;
+            }
+            width += self.measure_char_family(ch, size, family);
+        }
+        width
+    }
 }
 
 #[cfg(feature = "modern-fonts")]
@@ -217,7 +195,6 @@ mod tests {
     #[cfg(feature = "modern-fonts")]
     fn test_font_system() {
         let system = FontSystem::modern();
-        assert!(system.has_glyph('A', FontVariant::Regular));
         assert!(system.measure_text("Hello", 16.0) > 0.0);
     }
 

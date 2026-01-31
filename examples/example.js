@@ -2,35 +2,30 @@ const { writeFileSync } = require("fs");
 const { createCanvas } = require("canvas");
 const { MCText, FontSystem, LayoutOptions, render } = require("@hexze/mctext");
 
-class TextRenderer {
-  constructor() {
-    this.fonts = FontSystem.modern();
-  }
+const fonts = FontSystem.modern();
 
-  render(text, size = 16.0) {
-    let width = Math.ceil(this.fonts.measure(text.plainText(), size)) + 8;
-    let height = Math.ceil(size * 2);
-    let options = new LayoutOptions(size).withShadow(true);
-    let result = render(this.fonts, text, width, height, options);
+const text = new MCText()
+  .span("hello ")
+  .color("red")
+  .then("world!")
+  .color("gold")
+  .build();
 
-    let tmpCanvas = createCanvas(result.width(), result.height());
-    let tmpCtx = tmpCanvas.getContext("2d");
-    let imageData = tmpCtx.createImageData(result.width(), result.height());
-    imageData.data.set(result.data());
-    tmpCtx.putImageData(imageData, 0, 0);
+const [width, height] = [200, 60];
+const options = new LayoutOptions(32.0).withShadow(true);
 
-    return tmpCanvas;
-  }
-}
+const result = render(fonts, text, width, height, options);
 
-let renderer = new TextRenderer();
+const canvas = createCanvas(width, height);
+const ctx = canvas.getContext("2d");
+ctx.fillStyle = "rgb(24, 24, 24)";
+ctx.fillRect(0, 0, width, height);
 
-let canvas = createCanvas(400, 60);
-let ctx = canvas.getContext("2d");
-ctx.fillStyle = "black";
-ctx.fillRect(0, 0, 400, 60);
-
-let text = new MCText().span("Minecraft Text!").color("red").build();
-ctx.drawImage(renderer.render(text), 10, 20);
+const tmp = createCanvas(result.width(), result.height());
+const tmpCtx = tmp.getContext("2d");
+const imageData = tmpCtx.createImageData(result.width(), result.height());
+imageData.data.set(result.data());
+tmpCtx.putImageData(imageData, 0, 0);
+ctx.drawImage(tmp, 10, 14);
 
 writeFileSync("javascript_output.png", canvas.toBuffer("image/png"));

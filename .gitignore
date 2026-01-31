@@ -19,7 +19,7 @@ package-lock.json
 /tools/.test_output/
 
 # Example output
-examples/*_output.png
+examples/*_output*.png
 examples/target/
 examples/Cargo.lock
 
@@ -32,3 +32,6 @@ examples/Cargo.lock
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude
+.claude/

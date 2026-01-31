@@ -199,6 +199,16 @@ impl MCText {
         self.inner.plain_text().chars().count()
     }
 
+    fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
+    fn concat(&self, other: &MCText) -> MCText {
+        MCText {
+            inner: self.inner.clone().concat(other.inner.clone()),
+        }
+    }
+
     fn span(slf: PyRef<'_, Self>, text: &str) -> SpanBuilder {
         SpanBuilder {
             inner: Some(slf.inner.clone().span(text)),
@@ -292,9 +302,31 @@ fn named_colors() -> Vec<(String, char, (u8, u8, u8))> {
 mod rendering {
     use super::*;
     use ::mctext::{
-        FontSystem as RustFontSystem, FontVariant, FontVersion, LayoutOptions as RustLayoutOptions,
-        SoftwareRenderer, TextRenderContext,
+        FontFamily as RustFontFamily, FontSystem as RustFontSystem, FontVariant, FontVersion,
+        LayoutOptions as RustLayoutOptions, SoftwareRenderer, TextRenderContext,
     };
+
+    #[pyclass(eq, eq_int)]
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    pub enum FontFamily {
+        Minecraft,
+        Enchanting,
+        Illager,
+    }
+
+    impl From<FontFamily> for RustFontFamily {
+        fn from(f: FontFamily) -> Self {
+            match f {
+                FontFamily::Minecraft => RustFontFamily::Minecraft,
+                #[cfg(feature = "special-fonts")]
+                FontFamily::Enchanting => RustFontFamily::Enchanting,
+                #[cfg(feature = "special-fonts")]
+                FontFamily::Illager => RustFontFamily::Illager,
+                #[cfg(not(feature = "special-fonts"))]
+                _ => RustFontFamily::Minecraft,
+            }
+        }
+    }
 
     #[pyclass]
     pub struct FontSystem {
@@ -304,7 +336,6 @@ mod rendering {
     #[pymethods]
     impl FontSystem {
         #[staticmethod]
-        #[cfg(feature = "modern-fonts")]
         fn modern() -> Self {
             Self {
                 inner: RustFontSystem::new(FontVersion::Modern),
@@ -312,7 +343,6 @@ mod rendering {
         }
 
         #[staticmethod]
-        #[cfg(feature = "legacy-fonts")]
         fn legacy() -> Self {
             Self {
                 inner: RustFontSystem::new(FontVersion::Legacy),
@@ -321,6 +351,10 @@ mod rendering {
 
         fn measure(&self, text: &str, size: f32) -> f32 {
             self.inner.measure_text(text, size)
+        }
+
+        fn measure_family(&self, text: &str, size: f32, family: FontFamily) -> f32 {
+            self.inner.measure_text_family(text, size, family.into())
         }
 
         fn ascent_ratio(&self) -> f32 {
@@ -334,28 +368,62 @@ mod rendering {
         size: f32,
         max_width: Option<f32>,
         shadow: bool,
+        align: String,
+        line_spacing: f32,
     }
 
     #[pymethods]
     impl LayoutOptions {
         #[new]
-        #[pyo3(signature = (size, max_width=None, shadow=false))]
-        fn new(size: f32, max_width: Option<f32>, shadow: bool) -> Self {
+        fn new(size: f32) -> Self {
             Self {
                 size,
-                max_width,
-                shadow,
+                max_width: None,
+                shadow: false,
+                align: "left".to_string(),
+                line_spacing: -1.0,
             }
+        }
+
+        fn with_max_width(&self, width: f32) -> Self {
+            let mut opts = self.clone();
+            opts.max_width = Some(width);
+            opts
+        }
+
+        fn with_shadow(&self, shadow: bool) -> Self {
+            let mut opts = self.clone();
+            opts.shadow = shadow;
+            opts
+        }
+
+        fn with_align(&self, align: &str) -> Self {
+            let mut opts = self.clone();
+            opts.align = align.to_string();
+            opts
+        }
+
+        fn with_line_spacing(&self, spacing: f32) -> Self {
+            let mut opts = self.clone();
+            opts.line_spacing = spacing;
+            opts
         }
     }
 
     impl LayoutOptions {
         fn to_rust(&self) -> RustLayoutOptions {
+            use ::mctext::TextAlign;
             let mut opts = RustLayoutOptions::new(self.size);
             if let Some(w) = self.max_width {
                 opts = opts.with_max_width(w);
             }
             opts = opts.with_shadow(self.shadow);
+            opts = opts.with_line_spacing(self.line_spacing);
+            opts = opts.with_align(match self.align.as_str() {
+                "center" => TextAlign::Center,
+                "right" => TextAlign::Right,
+                _ => TextAlign::Left,
+            });
             opts
         }
     }
@@ -404,11 +472,72 @@ mod rendering {
         }
     }
 
+    #[pyfunction]
+    pub fn render_family(
+        font_system: &FontSystem,
+        text: &str,
+        width: u32,
+        height: u32,
+        size: f32,
+        family: FontFamily,
+    ) -> RenderResult {
+        let (w, h) = (width as usize, height as usize);
+        let mut buffer = vec![0u8; w * h * 4];
+        let rust_family: RustFontFamily = family.into();
+        let font = font_system.inner.font_for_family(rust_family);
+        let ascent = font
+            .horizontal_line_metrics(size)
+            .map(|m| m.ascent)
+            .unwrap_or(size * 0.8);
+
+        let mut x = 0.0f32;
+        for ch in text.chars() {
+            if ch.is_control() {
+                continue;
+            }
+
+            let (metrics, bitmap) = font.rasterize(ch, size);
+            let gx = (x + metrics.xmin as f32) as i32;
+            let gy = (ascent - metrics.ymin as f32 - metrics.height as f32) as i32;
+
+            for row in 0..metrics.height {
+                for col in 0..metrics.width {
+                    let px = gx + col as i32;
+                    let py = gy + row as i32;
+                    if px >= 0 && px < w as i32 && py >= 0 && py < h as i32 {
+                        let src = bitmap[row * metrics.width + col];
+                        if src > 0 {
+                            let idx = ((py as usize) * w + (px as usize)) * 4;
+                            buffer[idx] = 255;
+                            buffer[idx + 1] = 255;
+                            buffer[idx + 2] = 255;
+                            buffer[idx + 3] = src;
+                        }
+                    }
+                }
+            }
+
+            x += if ch == ' ' {
+                size * 0.4
+            } else {
+                metrics.advance_width
+            };
+        }
+
+        RenderResult {
+            width,
+            height,
+            data: buffer,
+        }
+    }
+
     pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
+        m.add_class::<FontFamily>()?;
         m.add_class::<FontSystem>()?;
         m.add_class::<LayoutOptions>()?;
         m.add_class::<RenderResult>()?;
         m.add_function(wrap_pyfunction!(render, m)?)?;
+        m.add_function(wrap_pyfunction!(render_family, m)?)?;
         Ok(())
     }
 }

@@ -38,24 +38,14 @@ pub trait TextRenderer {
 }
 
 pub struct TextRenderContext<'a> {
-    font_system: &'a FontSystem,
     layout_engine: LayoutEngine<'a>,
 }
 
 impl<'a> TextRenderContext<'a> {
     pub fn new(font_system: &'a FontSystem) -> Self {
         Self {
-            font_system,
             layout_engine: LayoutEngine::new(font_system),
         }
-    }
-
-    pub fn font_system(&self) -> &FontSystem {
-        self.font_system
-    }
-
-    pub fn layout(&self, text: &MCText, options: &LayoutOptions) -> TextLayout {
-        self.layout_engine.layout(text, options)
     }
 
     pub fn layout_at(&self, text: &MCText, x: f32, y: f32, options: &LayoutOptions) -> TextLayout {

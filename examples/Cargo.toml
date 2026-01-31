@@ -10,6 +10,10 @@ publish = false
 name = "example"
 path = "example.rs"
 
+[[bin]]
+name = "example2"
+path = "example2.rs"
+
 [dependencies]
 mctext = { path = "../crates/mctext", features = ["render"] }
 image = "0.25"

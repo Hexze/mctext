@@ -29,4 +29,4 @@ Repository = "https://github.com/hexze/mctext"
 Documentation = "https://github.com/hexze/mctext"
 
 [tool.maturin]
-features = ["pyo3/extension-module"]
+features = ["pyo3/extension-module", "all-fonts"]

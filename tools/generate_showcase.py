@@ -1,9 +1,8 @@
 import json
 from pathlib import Path
 
-from PIL import Image, ImageDraw
-
 import mctext
+from PIL import Image, ImageDraw
 
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_DIR = SCRIPT_DIR.parent
@@ -19,15 +18,19 @@ def get_latest_version() -> str:
     return "1.21"
 
 
-def render_text(font_system, text: str, size: float, width: int, height: int) -> Image.Image:
-    opts = mctext.LayoutOptions(size, shadow=False)
-    result = mctext.render(font_system, text, width, height, opts)
-    return Image.frombytes("RGBA", (result.width, result.height), bytes(result.to_bytes()))
+def render_text(
+    font_system, text: str, size: float, width: int, height: int
+) -> Image.Image:
+    opts = mctext.LayoutOptions(size).with_shadow(False)
+    result = mctext.render(font_system, mctext.MCText.parse(text), width, height, opts)
+    return Image.frombytes("RGBA", (result.width, result.height), bytes(result.data()))
 
 
-def render_family(font_system, text: str, size: float, width: int, height: int, family) -> Image.Image:
+def render_family(
+    font_system, text: str, size: float, width: int, height: int, family
+) -> Image.Image:
     result = mctext.render_family(font_system, text, width, height, size, family)
-    return Image.frombytes("RGBA", (result.width, result.height), bytes(result.to_bytes()))
+    return Image.frombytes("RGBA", (result.width, result.height), bytes(result.data()))
 
 
 def colorize(img: Image.Image, color: tuple[int, int, int]) -> Image.Image:
@@ -99,16 +102,34 @@ def create_showcase():
 
     y = padding
     paste_text(modern_fs, "\u00a77Illager", right_col_x, y)
-    illager_width = int(modern_fs.measure_family(sample_text, size, mctext.FontFamily.Illager))
-    illager_img = render_family(modern_fs, sample_text, size, illager_width + 5, line_height, mctext.FontFamily.Illager)
+    illager_width = int(
+        modern_fs.measure_family(sample_text, size, mctext.FontFamily.Illager)
+    )
+    illager_img = render_family(
+        modern_fs,
+        sample_text,
+        size,
+        illager_width + 5,
+        line_height,
+        mctext.FontFamily.Illager,
+    )
     illager_colored = colorize(illager_img, (255, 85, 85))
     illager_x = right_col_x + col_width - illager_width - 5
     img.paste(illager_colored, (illager_x, y), illager_colored)
 
     y += line_height
     paste_text(modern_fs, "\u00a77Enchanting", right_col_x, y)
-    enchanting_width = int(modern_fs.measure_family(sample_text, size, mctext.FontFamily.Enchanting))
-    enchanting_img = render_family(modern_fs, sample_text, size, enchanting_width + 5, line_height, mctext.FontFamily.Enchanting)
+    enchanting_width = int(
+        modern_fs.measure_family(sample_text, size, mctext.FontFamily.Enchanting)
+    )
+    enchanting_img = render_family(
+        modern_fs,
+        sample_text,
+        size,
+        enchanting_width + 5,
+        line_height,
+        mctext.FontFamily.Enchanting,
+    )
     enchanting_colored = colorize(enchanting_img, (85, 255, 85))
     enchanting_x = right_col_x + col_width - enchanting_width - 5
     img.paste(enchanting_colored, (enchanting_x, y), enchanting_colored)
@@ -140,7 +161,9 @@ def create_showcase():
         draw.line([(line_start, my), (line_end, my)], fill=color, width=1)
 
     text_x = right_col_x
-    rendered = render_text(modern_fs, sample, metrics_size, text_width + 5, int(metrics_size * 1.2))
+    rendered = render_text(
+        modern_fs, sample, metrics_size, text_width + 5, int(metrics_size * 1.2)
+    )
     img.paste(rendered, (text_x, cap_y), rendered)
 
     label_size = 11

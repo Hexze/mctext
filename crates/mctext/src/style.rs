@@ -12,18 +12,6 @@ pub struct Style {
 }
 
 impl Style {
-    pub const NONE: Style = Style {
-        bold: false,
-        italic: false,
-        underlined: false,
-        strikethrough: false,
-        obfuscated: false,
-    };
-
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     pub fn bold(mut self) -> Self {
         self.bold = true;
         self
@@ -51,11 +39,11 @@ impl Style {
 
     pub fn from_code(code: char) -> Option<Style> {
         match code.to_ascii_lowercase() {
-            'l' => Some(Style::NONE.bold()),
-            'o' => Some(Style::NONE.italic()),
-            'n' => Some(Style::NONE.underlined()),
-            'm' => Some(Style::NONE.strikethrough()),
-            'k' => Some(Style::NONE.obfuscated()),
+            'l' => Some(Style::default().bold()),
+            'o' => Some(Style::default().italic()),
+            'n' => Some(Style::default().underlined()),
+            'm' => Some(Style::default().strikethrough()),
+            'k' => Some(Style::default().obfuscated()),
             _ => None,
         }
     }
@@ -77,7 +65,7 @@ impl Style {
     }
 
     pub fn is_empty(&self) -> bool {
-        *self == Self::NONE
+        *self == Self::default()
     }
 
     pub fn merge(&self, other: &Style) -> Style {
@@ -105,8 +93,8 @@ mod tests {
 
     #[test]
     fn test_style() {
-        let style = Style::new().bold().italic();
+        let style = Style::default().bold().italic();
         assert!(style.bold && style.italic && !style.underlined);
-        assert_eq!(Style::from_code('l'), Some(Style::NONE.bold()));
+        assert_eq!(Style::from_code('l'), Some(Style::default().bold()));
     }
 }

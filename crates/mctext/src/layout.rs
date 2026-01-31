@@ -97,6 +97,20 @@ impl Default for TextLayout {
     }
 }
 
+#[derive(Clone)]
+struct Glyph {
+    ch: char,
+    advance: f32,
+    color: TextColor,
+    variant: FontVariant,
+}
+
+enum Token {
+    Word(Vec<Glyph>),
+    Space(Glyph),
+    Newline,
+}
+
 pub struct LayoutEngine<'a> {
     font_system: &'a FontSystem,
 }
@@ -110,104 +124,158 @@ impl<'a> LayoutEngine<'a> {
         self.layout_at(text, 0.0, 0.0, options)
     }
 
-    pub fn layout_at(&self, text: &MCText, x: f32, y: f32, options: &LayoutOptions) -> TextLayout {
+    fn tokenize(&self, text: &MCText, size: f32) -> Vec<Token> {
         let default_color = TextColor::default();
-        let mut glyphs = Vec::new();
-        let mut lines: Vec<Vec<PositionedGlyph>> = vec![Vec::new()];
-        let mut cursor_x = 0.0f32;
-        let mut max_width = 0.0f32;
-
-        let ascent = self.font_system.ascent_ratio(FontVariant::Regular) * options.size;
-        let shadow_offset = options.size * SHADOW_OFFSET_RATIO;
+        let mut tokens = Vec::new();
+        let mut current_word = Vec::new();
 
         for span in text.spans() {
             let color = span.color.unwrap_or(default_color);
             let variant = FontVariant::from_style(span.style.bold, span.style.italic);
 
             for ch in span.text.chars() {
-                if ch == '\n' {
+                match ch {
+                    '\n' => {
+                        if !current_word.is_empty() {
+                            tokens.push(Token::Word(std::mem::take(&mut current_word)));
+                        }
+                        tokens.push(Token::Newline);
+                    }
+                    ' ' => {
+                        if !current_word.is_empty() {
+                            tokens.push(Token::Word(std::mem::take(&mut current_word)));
+                        }
+                        tokens.push(Token::Space(Glyph {
+                            ch: ' ',
+                            advance: self.font_system.measure_char(' ', size, variant),
+                            color,
+                            variant,
+                        }));
+                    }
+                    _ if !ch.is_control() => {
+                        current_word.push(Glyph {
+                            ch,
+                            advance: self.font_system.measure_char(ch, size, variant),
+                            color,
+                            variant,
+                        });
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        if !current_word.is_empty() {
+            tokens.push(Token::Word(current_word));
+        }
+
+        tokens
+    }
+
+    pub fn layout_at(&self, text: &MCText, x: f32, y: f32, options: &LayoutOptions) -> TextLayout {
+        let tokens = self.tokenize(text, options.size);
+        let mut lines: Vec<Vec<Glyph>> = vec![Vec::new()];
+        let mut cursor_x = 0.0f32;
+        let mut max_width = 0.0f32;
+
+        for token in tokens {
+            match token {
+                Token::Newline => {
                     max_width = max_width.max(cursor_x);
                     cursor_x = 0.0;
                     lines.push(Vec::new());
-                    continue;
                 }
-
-                if ch.is_control() {
-                    continue;
+                Token::Space(glyph) => {
+                    if let Some(max_w) = options.max_width {
+                        if cursor_x + glyph.advance > max_w && cursor_x > 0.0 {
+                            max_width = max_width.max(cursor_x);
+                            cursor_x = 0.0;
+                            lines.push(Vec::new());
+                            continue;
+                        }
+                    }
+                    lines.last_mut().unwrap().push(glyph.clone());
+                    cursor_x += glyph.advance;
                 }
+                Token::Word(glyphs) => {
+                    let word_width: f32 = glyphs.iter().map(|g| g.advance).sum();
 
-                let advance = self.font_system.measure_char(ch, options.size, variant);
+                    if let Some(max_w) = options.max_width {
+                        if cursor_x > 0.0 && cursor_x + word_width > max_w {
+                            max_width = max_width.max(cursor_x);
+                            cursor_x = 0.0;
+                            lines.push(Vec::new());
+                        }
+                    }
 
-                if let Some(max_w) = options.max_width {
-                    if cursor_x + advance > max_w && cursor_x > 0.0 {
-                        max_width = max_width.max(cursor_x);
-                        cursor_x = 0.0;
-                        lines.push(Vec::new());
+                    for glyph in glyphs {
+                        if let Some(max_w) = options.max_width {
+                            if cursor_x + glyph.advance > max_w && cursor_x > 0.0 {
+                                max_width = max_width.max(cursor_x);
+                                cursor_x = 0.0;
+                                lines.push(Vec::new());
+                            }
+                        }
+                        lines.last_mut().unwrap().push(glyph.clone());
+                        cursor_x += glyph.advance;
                     }
                 }
-
-                let glyph = PositionedGlyph {
-                    ch,
-                    x: cursor_x,
-                    y: 0.0,
-                    size: options.size,
-                    color,
-                    variant,
-                    is_shadow: false,
-                };
-
-                if let Some(line) = lines.last_mut() {
-                    line.push(glyph);
-                }
-
-                cursor_x += advance;
             }
         }
 
         max_width = max_width.max(cursor_x);
+        self.build_layout(lines, max_width, x, y, options)
+    }
+
+    fn build_layout(
+        &self,
+        lines: Vec<Vec<Glyph>>,
+        max_width: f32,
+        x: f32,
+        y: f32,
+        options: &LayoutOptions,
+    ) -> TextLayout {
+        let ascent = self.font_system.ascent_ratio(FontVariant::Regular) * options.size;
+        let shadow_offset = options.size * SHADOW_OFFSET_RATIO;
 
         let line_count = lines.len() as f32;
         let gap_count = (lines.len().saturating_sub(1)) as f32;
         let total_height = line_count * options.size + gap_count * options.line_spacing;
+
+        let mut glyphs = Vec::new();
         let mut current_y = y + ascent;
 
         for line in &lines {
-            let line_width: f32 = line
-                .iter()
-                .map(|g| self.font_system.measure_char(g.ch, options.size, g.variant))
-                .sum();
-
+            let line_width: f32 = line.iter().map(|g| g.advance).sum();
             let x_offset = match options.align {
                 TextAlign::Left => x,
                 TextAlign::Center => x + (max_width - line_width) / 2.0,
                 TextAlign::Right => x + max_width - line_width,
             };
 
+            let mut gx = x_offset;
             for glyph in line {
-                let gx = x_offset + glyph.x;
-                let gy = current_y;
-
                 if options.shadow {
                     glyphs.push(PositionedGlyph {
                         ch: glyph.ch,
                         x: gx + shadow_offset,
-                        y: gy + shadow_offset,
-                        size: glyph.size,
+                        y: current_y + shadow_offset,
+                        size: options.size,
                         color: glyph.color,
                         variant: glyph.variant,
                         is_shadow: true,
                     });
                 }
-
                 glyphs.push(PositionedGlyph {
                     ch: glyph.ch,
                     x: gx,
-                    y: gy,
-                    size: glyph.size,
+                    y: current_y,
+                    size: options.size,
                     color: glyph.color,
                     variant: glyph.variant,
                     is_shadow: false,
                 });
+                gx += glyph.advance;
             }
 
             current_y += options.size + options.line_spacing;
@@ -230,6 +298,7 @@ impl<'a> LayoutEngine<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     fn test_system() -> FontSystem {
         FontSystem::modern()
     }
@@ -241,7 +310,7 @@ mod tests {
         let text = MCText::parse("§6Hello");
         let layout = engine.layout(&text, &LayoutOptions::new(16.0));
 
-        assert_eq!(layout.glyphs.len(), 10); // 5 chars + 5 shadows
+        assert_eq!(layout.glyphs.len(), 10);
         assert!(layout.width > 0.0);
     }
 

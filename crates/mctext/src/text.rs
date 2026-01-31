@@ -161,10 +161,6 @@ impl MCText {
         Self { spans }
     }
 
-    pub fn from_spans(spans: Vec<Span>) -> Self {
-        Self { spans }
-    }
-
     pub fn spans(&self) -> &[Span] {
         &self.spans
     }
@@ -173,7 +169,7 @@ impl MCText {
         self.spans
     }
 
-    pub fn push(&mut self, span: Span) {
+    pub(crate) fn push(&mut self, span: Span) {
         self.spans.push(span);
     }
 

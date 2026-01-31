@@ -121,6 +121,17 @@ impl MCText {
         serde_wasm_bindgen::to_value(&spans).unwrap_or(JsValue::NULL)
     }
 
+    #[wasm_bindgen(js_name = isEmpty)]
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
+    pub fn concat(&self, other: &MCText) -> MCText {
+        MCText {
+            inner: self.inner.clone().concat(other.inner.clone()),
+        }
+    }
+
     pub fn span(self, text: &str) -> SpanBuilder {
         SpanBuilder {
             inner: Some(self.inner.span(text)),
@@ -230,7 +241,32 @@ pub fn named_colors() -> JsValue {
 #[cfg(feature = "render")]
 mod render {
     use super::*;
-    use mctext::{FontSystem as RustFontSystem, FontVersion, LayoutOptions as RustLayoutOptions};
+    use mctext::{
+        FontFamily as RustFontFamily, FontSystem as RustFontSystem, FontVersion,
+        LayoutOptions as RustLayoutOptions,
+    };
+
+    #[wasm_bindgen]
+    #[derive(Clone, Copy)]
+    pub enum FontFamily {
+        Minecraft = 0,
+        Enchanting = 1,
+        Illager = 2,
+    }
+
+    impl From<FontFamily> for RustFontFamily {
+        fn from(f: FontFamily) -> Self {
+            match f {
+                FontFamily::Minecraft => RustFontFamily::Minecraft,
+                #[cfg(feature = "special-fonts")]
+                FontFamily::Enchanting => RustFontFamily::Enchanting,
+                #[cfg(feature = "special-fonts")]
+                FontFamily::Illager => RustFontFamily::Illager,
+                #[cfg(not(feature = "special-fonts"))]
+                _ => RustFontFamily::Minecraft,
+            }
+        }
+    }
 
     #[wasm_bindgen]
     pub struct FontSystem {
@@ -239,14 +275,12 @@ mod render {
 
     #[wasm_bindgen]
     impl FontSystem {
-        #[cfg(feature = "modern-fonts")]
         pub fn modern() -> Self {
             Self {
                 inner: RustFontSystem::new(FontVersion::Modern),
             }
         }
 
-        #[cfg(feature = "legacy-fonts")]
         pub fn legacy() -> Self {
             Self {
                 inner: RustFontSystem::new(FontVersion::Legacy),
@@ -256,13 +290,27 @@ mod render {
         pub fn measure(&self, text: &str, size: f32) -> f32 {
             self.inner.measure_text(text, size)
         }
+
+        #[wasm_bindgen(js_name = measureFamily)]
+        pub fn measure_family(&self, text: &str, size: f32, family: FontFamily) -> f32 {
+            self.inner.measure_text_family(text, size, family.into())
+        }
+
+        #[wasm_bindgen(js_name = ascentRatio)]
+        pub fn ascent_ratio(&self) -> f32 {
+            use mctext::FontVariant;
+            self.inner.ascent_ratio(FontVariant::Regular)
+        }
     }
 
     #[wasm_bindgen]
+    #[derive(Clone)]
     pub struct LayoutOptions {
         size: f32,
         max_width: Option<f32>,
         shadow: bool,
+        align: String,
+        line_spacing: f32,
     }
 
     #[wasm_bindgen]
@@ -273,27 +321,52 @@ mod render {
                 size,
                 max_width: None,
                 shadow: false,
+                align: "left".to_string(),
+                line_spacing: -1.0,
             }
         }
 
         #[wasm_bindgen(js_name = withMaxWidth)]
-        pub fn with_max_width(mut self, width: f32) -> Self {
-            self.max_width = Some(width);
-            self
+        pub fn with_max_width(&self, width: f32) -> Self {
+            let mut opts = self.clone();
+            opts.max_width = Some(width);
+            opts
         }
 
         #[wasm_bindgen(js_name = withShadow)]
-        pub fn with_shadow(mut self, shadow: bool) -> Self {
-            self.shadow = shadow;
-            self
+        pub fn with_shadow(&self, shadow: bool) -> Self {
+            let mut opts = self.clone();
+            opts.shadow = shadow;
+            opts
+        }
+
+        #[wasm_bindgen(js_name = withAlign)]
+        pub fn with_align(&self, align: &str) -> Self {
+            let mut opts = self.clone();
+            opts.align = align.to_string();
+            opts
+        }
+
+        #[wasm_bindgen(js_name = withLineSpacing)]
+        pub fn with_line_spacing(&self, spacing: f32) -> Self {
+            let mut opts = self.clone();
+            opts.line_spacing = spacing;
+            opts
         }
 
         fn to_rust(&self) -> RustLayoutOptions {
+            use mctext::TextAlign;
             let mut opts = RustLayoutOptions::new(self.size);
             if let Some(w) = self.max_width {
                 opts = opts.with_max_width(w);
             }
             opts = opts.with_shadow(self.shadow);
+            opts = opts.with_line_spacing(self.line_spacing);
+            opts = opts.with_align(match self.align.as_str() {
+                "center" => TextAlign::Center,
+                "right" => TextAlign::Right,
+                _ => TextAlign::Left,
+            });
             opts
         }
     }
@@ -337,6 +410,65 @@ mod render {
             let mut renderer = SoftwareRenderer::new(&font_system.inner, &mut buffer, w, h);
             let ctx = TextRenderContext::new(&font_system.inner);
             let _ = ctx.render(&mut renderer, &text.inner, 0.0, 0.0, &options.to_rust());
+        }
+
+        RenderResult {
+            width,
+            height,
+            data: buffer,
+        }
+    }
+
+    #[wasm_bindgen(js_name = renderFamily)]
+    pub fn render_family(
+        font_system: &FontSystem,
+        text: &str,
+        width: u32,
+        height: u32,
+        size: f32,
+        family: FontFamily,
+    ) -> RenderResult {
+        let (w, h) = (width as usize, height as usize);
+        let mut buffer = vec![0u8; w * h * 4];
+        let rust_family: RustFontFamily = family.into();
+        let font = font_system.inner.font_for_family(rust_family);
+        let ascent = font
+            .horizontal_line_metrics(size)
+            .map(|m| m.ascent)
+            .unwrap_or(size * 0.8);
+
+        let mut x = 0.0f32;
+        for ch in text.chars() {
+            if ch.is_control() {
+                continue;
+            }
+
+            let (metrics, bitmap) = font.rasterize(ch, size);
+            let gx = (x + metrics.xmin as f32) as i32;
+            let gy = (ascent - metrics.ymin as f32 - metrics.height as f32) as i32;
+
+            for row in 0..metrics.height {
+                for col in 0..metrics.width {
+                    let px = gx + col as i32;
+                    let py = gy + row as i32;
+                    if px >= 0 && px < w as i32 && py >= 0 && py < h as i32 {
+                        let src = bitmap[row * metrics.width + col];
+                        if src > 0 {
+                            let idx = ((py as usize) * w + (px as usize)) * 4;
+                            buffer[idx] = 255;
+                            buffer[idx + 1] = 255;
+                            buffer[idx + 2] = 255;
+                            buffer[idx + 3] = src;
+                        }
+                    }
+                }
+            }
+
+            x += if ch == ' ' {
+                size * 0.4
+            } else {
+                metrics.advance_width
+            };
         }
 
         RenderResult {

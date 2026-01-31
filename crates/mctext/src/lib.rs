@@ -23,8 +23,7 @@ pub use fonts::{LEGACY_BOLD, LEGACY_BOLD_ITALIC, LEGACY_ITALIC, LEGACY_REGULAR};
 #[cfg(feature = "special-fonts")]
 pub use fonts::{ENCHANTING_REGULAR, ILLAGER_REGULAR};
 
-pub use json::{ParseError, try_parse_json_component};
-pub use json::{parse_json_component, parse_value as parse_json_value, to_json, to_legacy};
+pub use json::{ParseError, to_json, try_parse_json_component};
 pub use style::Style;
 pub use text::{MCText, Span, SpanBuilder, count_visible_chars, strip_codes};
 

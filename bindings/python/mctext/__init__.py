@@ -1,5 +1,6 @@
 from mctext.mctext import (
     Color,
+    FontFamily,
     FontSystem,
     LayoutOptions,
     MCText,
@@ -9,6 +10,7 @@ from mctext.mctext import (
     count_visible_chars,
     named_colors,
     render,
+    render_family,
     strip_codes,
 )
 
@@ -25,8 +27,10 @@ __all__ = [
     "strip_codes",
     "count_visible_chars",
     "named_colors",
+    "FontFamily",
     "FontSystem",
     "LayoutOptions",
     "RenderResult",
     "render",
+    "render_family",
 ]

@@ -12,7 +12,7 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["modern-fonts"]
+default = ["all-fonts"]
 render = ["mctext/render"]
 modern-fonts = ["mctext/modern-fonts", "render"]
 legacy-fonts = ["mctext/legacy-fonts", "render"]

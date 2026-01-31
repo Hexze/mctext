@@ -25,11 +25,7 @@ pub fn try_parse_json_component(json: &str) -> Result<MCText, ParseError> {
     Ok(parse_value(&value))
 }
 
-pub fn parse_json_component(json: &str) -> MCText {
-    try_parse_json_component(json).unwrap_or_default()
-}
-
-pub fn parse_value(value: &Value) -> MCText {
+fn parse_value(value: &Value) -> MCText {
     let mut text = MCText::new();
     extract_spans(value, None, Style::default(), &mut text);
     text
@@ -193,10 +189,6 @@ fn span_to_json(span: &Span) -> String {
     format!("{{{}}}", parts.join(","))
 }
 
-pub fn to_legacy(text: &MCText) -> String {
-    text.to_legacy()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -205,7 +197,7 @@ mod tests {
     #[test]
     fn test_parse_json() {
         let json = r#"{"text":"","extra":[{"text":"Hello ","color":"gold"},{"text":"World","color":"aqua"}]}"#;
-        let text = parse_json_component(json);
+        let text = try_parse_json_component(json).unwrap();
         assert_eq!(text.plain_text(), "Hello World");
         assert_eq!(text.spans().len(), 2);
     }

@@ -13,7 +13,7 @@ name = "mctext"
 crate-type = ["cdylib"]
 
 [features]
-default = ["modern-fonts"]
+default = ["all-fonts"]
 render = ["mctext/render"]
 modern-fonts = ["mctext/modern-fonts", "render"]
 legacy-fonts = ["mctext/legacy-fonts", "render"]
