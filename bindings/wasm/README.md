@@ -70,7 +70,7 @@ for span in text.spans():
     print(f"{span.text}: {span.color}")
 ```
 
-### JavaScript
+### JavaScript (Node.js)
 
 ```bash
 npm install @hexze/mctext
@@ -84,6 +84,16 @@ let text = new MCText().span("Red ").color("red").then("Bold").color("red").bold
 for (const span of text.spans()) {
     console.log(`${span.text}: ${span.color}`);
 }
+```
+
+### JavaScript (Browser/ES Modules)
+
+```javascript
+import init, { MCText } from '@hexze/mctext';
+
+await init();
+
+let text = new MCText().span("Red ").color("red").then("Bold").color("red").bold().build();
 ```
 
 ## License

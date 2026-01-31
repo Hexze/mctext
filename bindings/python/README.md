@@ -112,7 +112,7 @@ import mctext
 text = mctext.MCText().span("Hello ").color("red").then("World").color("red").bold().build()
 
 fonts = mctext.FontSystem.modern()
-options = mctext.LayoutOptions(16.0, None, True)  # size, max_width, shadow
+options = mctext.LayoutOptions(16.0).with_shadow(True)
 result = mctext.render(fonts, text, 256, 64, options)
 
 # result.width, result.height - dimensions
@@ -126,8 +126,22 @@ result = mctext.render(fonts, text, 256, 64, options)
 | `FontSystem.modern()` | Load post-1.13 fonts |
 | `FontSystem.legacy()` | Load pre-1.13 fonts |
 | `FontSystem.measure(text, size)` | Measure text width in pixels |
-| `LayoutOptions(size, max_width, shadow)` | Layout options |
+| `FontSystem.measure_family(text, size, family)` | Measure text with specific font family |
+| `LayoutOptions(size)` | Create layout options with font size |
+| `.with_shadow(bool)` | Enable drop shadow |
+| `.with_max_width(width)` | Enable text wrapping |
+| `.with_align(align)` | Set alignment ("left", "center", "right") |
+| `.with_line_spacing(spacing)` | Set line spacing |
 | `render(fonts, text, width, height, options)` | Render to RGBA buffer |
+| `render_family(fonts, text, family, width, height, options)` | Render with specific font family |
+
+### Font Families
+
+| Family | Description |
+|--------|-------------|
+| `FontFamily.Minecraft` | Standard Minecraft font |
+| `FontFamily.Enchanting` | Enchanting table font |
+| `FontFamily.Illager` | Illager runes font |
 
 ## License
 

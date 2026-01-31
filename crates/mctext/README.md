@@ -77,9 +77,7 @@ npm install @hexze/mctext
 ```
 
 ```javascript
-import init, { MCText } from '@hexze/mctext';
-
-await init();
+const { MCText } = require('@hexze/mctext');
 
 let text = new MCText().span("Red ").color("red").then("Bold").color("red").bold().build();
 
