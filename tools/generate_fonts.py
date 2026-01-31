@@ -22,14 +22,15 @@ import re
 import zipfile
 from pathlib import Path
 
+import brotli
 import PIL.Image
 import requests
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
-import pygame
 import fontTools.fontBuilder
 import fontTools.pens.ttGlyphPen
 import fontTools.ttLib.tables._g_l_y_f
+import pygame
 
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_DIR = SCRIPT_DIR.parent
@@ -177,7 +178,10 @@ class FontBuilder:
         self.fonts["Regular"][char] = {"width": width * PIXEL_SCALE, "path": None}
         self.fonts["Italic"][char] = {"width": width * PIXEL_SCALE, "path": None}
         self.fonts["Bold"][char] = {"width": (width + 1) * PIXEL_SCALE, "path": None}
-        self.fonts["Bold Italic"][char] = {"width": (width + 1) * PIXEL_SCALE, "path": None}
+        self.fonts["Bold Italic"][char] = {
+            "width": (width + 1) * PIXEL_SCALE,
+            "path": None,
+        }
 
     def add_glyph(self, char: str, mask: pygame.mask.Mask, height: int, ascent: int):
         if char in self.seen:
@@ -210,7 +214,12 @@ class FontBuilder:
             }
 
     def save(self, name: str, output_dir: Path, aglfn: dict, dates: tuple):
-        suffixes = {"Regular": "", "Bold": "-bold", "Italic": "-italic", "Bold Italic": "-bold-italic"}
+        suffixes = {
+            "Regular": "",
+            "Bold": "-bold",
+            "Italic": "-italic",
+            "Bold Italic": "-bold-italic",
+        }
         for style, data in self.fonts.items():
             basename = f"{name}{suffixes[style]}"
             font = build_ttf(f"Minecraft {name.title()}", style, dates, data, aglfn)
@@ -244,7 +253,9 @@ def generate_modern_fonts(version: str, aglfn: dict):
             builder.save(name, output, aglfn, (created, modified))
 
 
-def process_modern_font(jar: zipfile.ZipFile, entry: str, builder: FontBuilder, version: str):
+def process_modern_font(
+    jar: zipfile.ZipFile, entry: str, builder: FontBuilder, version: str
+):
     data = json.loads(jar.read(entry))
 
     providers = list(data["providers"])
@@ -299,7 +310,9 @@ def process_modern_font(jar: zipfile.ZipFile, entry: str, builder: FontBuilder, 
                     if char == "\0":
                         continue
                     glyph = img.crop((x * gw, y * gh, (x + 1) * gw, (y + 1) * gh))
-                    surface = pygame.image.fromstring(glyph.tobytes(), glyph.size, "RGBA")
+                    surface = pygame.image.fromstring(
+                        glyph.tobytes(), glyph.size, "RGBA"
+                    )
                     mask = pygame.mask.from_surface(surface)
                     builder.add_glyph(char, mask, height, ascent)
 
@@ -385,7 +398,9 @@ def generate_legacy_fonts(aglfn: dict):
                     if end > start:
                         sx = int(start * gw / 16)
                         ex = int((end + 1) * gw / 16)
-                        glyph = img.crop((x * gw + sx, y * gh, x * gw + ex, (y + 1) * gh))
+                        glyph = img.crop(
+                            (x * gw + sx, y * gh, x * gw + ex, (y + 1) * gh)
+                        )
 
                 surface = pygame.image.fromstring(glyph.tobytes(), glyph.size, "RGBA")
                 mask = pygame.mask.from_surface(surface)
@@ -434,15 +449,17 @@ def build_ttf(name: str, style: str, dates: tuple, glyphs: dict, aglfn: dict):
     descent = FONT_EM * 2 // 12
     font.setupHorizontalHeader(ascent=ascent, descent=-descent)
 
-    font.setupNameTable({
-        "copyright": "Copyright (c) Mojang AB",
-        "familyName": name,
-        "styleName": style,
-        "uniqueFontIdentifier": f"{name.replace(' ', '')}.{style.replace(' ', '')}",
-        "fullName": f"{name} {style}",
-        "version": "Version 1.0",
-        "psName": f"{name.replace(' ', '')}{style.replace(' ', '')}",
-    })
+    font.setupNameTable(
+        {
+            "copyright": "Copyright (c) Mojang AB",
+            "familyName": name,
+            "styleName": style,
+            "uniqueFontIdentifier": f"{name.replace(' ', '')}.{style.replace(' ', '')}",
+            "fullName": f"{name} {style}",
+            "version": "Version 1.0",
+            "psName": f"{name.replace(' ', '')}{style.replace(' ', '')}",
+        }
+    )
 
     weight = 700 if "Bold" in style else 400
     mac = (1 if "Bold" in style else 0) + (2 if "Italic" in style else 0)
@@ -485,7 +502,9 @@ def build_ttf(name: str, style: str, dates: tuple, glyphs: dict, aglfn: dict):
     return font
 
 
-def vectorize(mask: pygame.mask.Mask, scale: float, offset: tuple, italic: bool = False):
+def vectorize(
+    mask: pygame.mask.Mask, scale: float, offset: tuple, italic: bool = False
+):
     w, h = mask.get_size()
     ox, oy = offset
 
@@ -595,7 +614,13 @@ def separate_regions(mask: pygame.mask.Mask) -> tuple:
             queue = [(x, y)]
             while queue:
                 px, py = queue.pop()
-                if (px, py) in checked or px < 0 or py < 0 or px >= w + 2 or py >= h + 2:
+                if (
+                    (px, py) in checked
+                    or px < 0
+                    or py < 0
+                    or px >= w + 2
+                    or py >= h + 2
+                ):
                     continue
                 if not inv.get_at((px, py)):
                     continue
@@ -614,7 +639,10 @@ def separate_regions(mask: pygame.mask.Mask) -> tuple:
 
 
 def collinear(p1: tuple, p2: tuple, p3: tuple) -> bool:
-    return abs((p2[0] - p1[0]) * (p3[1] - p1[1]) - (p3[0] - p1[0]) * (p2[1] - p1[1])) < 1e-12
+    return (
+        abs((p2[0] - p1[0]) * (p3[1] - p1[1]) - (p3[0] - p1[0]) * (p2[1] - p1[1]))
+        < 1e-12
+    )
 
 
 def main():
