@@ -6,8 +6,13 @@ use std::path::{Path, PathBuf};
 const REPO: &str = "hexze/mctext";
 
 fn get_fonts_version() -> String {
-    let version = env::var("CARGO_PKG_VERSION").unwrap_or_else(|_| "1.0.0".to_string());
-    format!("v{}", version)
+    let version = env::var("CARGO_PKG_VERSION").unwrap_or_else(|_| "1.3.0".to_string());
+    let parts: Vec<&str> = version.split('.').collect();
+    if parts.len() >= 2 {
+        format!("v{}.{}.0", parts[0], parts[1])
+    } else {
+        format!("v{}", version)
+    }
 }
 
 fn main() {
